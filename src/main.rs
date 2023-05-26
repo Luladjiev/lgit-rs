@@ -11,8 +11,13 @@ fn main() {
         Some(Commands::Branch { name, base }) => branch(name, base, cli.verbose),
         Some(Commands::Rebase { base }) => rebase(base, cli.verbose),
         Some(Commands::DeleteBranches { dry_run }) => delete_branches(dry_run, cli.verbose),
-        None => "No command provided".to_string(),
+        _ => Err(String::from(
+            "No command specified. Please run with --help for more info",
+        )),
     };
 
-    println!("{}", result);
+    match result {
+        Ok(result) => println!("{}", result),
+        Err(err) => eprintln!("{}", err),
+    }
 }

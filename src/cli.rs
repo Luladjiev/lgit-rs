@@ -17,24 +17,14 @@ pub enum Commands {
         #[arg(help = "Name of the branch to create")]
         name: String,
 
-        #[arg(
-            short,
-            long,
-            default_value = "main",
-            help = "Base branch to branch from"
-        )]
-        base: String,
+        #[arg(short, long, help = "Base branch to branch from")]
+        base: Option<String>,
     },
 
     #[command(about = "Rebase current branch on top of latest BASE branch")]
     Rebase {
-        #[arg(
-            short,
-            long,
-            default_value = "main",
-            help = "Base branch to branch from"
-        )]
-        base: String,
+        #[arg(short, long, help = "Base branch to branch from")]
+        base: Option<String>,
     },
 
     #[command(about = "Delete all branches for which remotes are gone. Use with caution!")]

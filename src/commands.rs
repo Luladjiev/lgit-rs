@@ -32,10 +32,10 @@ fn try_delete_branches(branches: String, dry_run: bool, verbose: bool) -> Result
             };
 
             if !dry_run {
-                let output = command("git", vec!["branch", "-d", branch_name], verbose);
+                let output = command("git", vec!["branch", "-D", branch_name], verbose);
 
                 if let Err(()) = output {
-                    return Err(String::from("Failed to delete branch"));
+                    return Err(format!("Failed to delete branch {}", branch_name));
                 }
             }
 

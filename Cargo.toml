@@ -1,11 +1,12 @@
 [package]
 name = "lgit"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 authors = ["Peter Luladjiev<lgit-rs@luladjiev.com>"]
 description = "CLI tool for managing git repositories"
 license = "MIT"
 repository = "https://github.com/Luladjiev/lgit-rs"
+readme = "README.md"
 keywords = ["git", "cli", "rust"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

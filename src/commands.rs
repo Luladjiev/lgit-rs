@@ -4,9 +4,9 @@ pub mod branch;
 pub mod delete_branches;
 pub mod rebase;
 
-fn command(cmd: &str, args: Vec<&str>, verbose: bool) -> Result<String, ()> {
+fn command(cmd: &str, args: &[&str], verbose: bool) -> Result<String, ()> {
     let output = process::Command::new(cmd)
-        .args(&args)
+        .args(args)
         .output()
         .expect("Failed to execute command");
 
@@ -14,23 +14,20 @@ fn command(cmd: &str, args: Vec<&str>, verbose: bool) -> Result<String, ()> {
         println!("Executing: {} {}", cmd, args.join(" "));
     }
 
-    match output.status.success() {
-        true => {
-            let output = String::from_utf8(output.stdout).unwrap();
+    if output.status.success() {
+        let output = String::from_utf8(output.stdout).unwrap();
 
-            if verbose {
-                println!("{}", output);
-            }
-
-            Ok(output)
+        if verbose {
+            println!("{output}");
         }
-        false => {
-            if verbose {
-                println!("{}", String::from_utf8(output.stderr).unwrap());
-            }
 
-            Err(())
+        Ok(output)
+    } else {
+        if verbose {
+            println!("{}", String::from_utf8(output.stderr).unwrap());
         }
+
+        Err(())
     }
 }
 
@@ -40,13 +37,13 @@ fn refresh_base(base: Option<String>, verbose: bool) -> Result<String, ()> {
         Err(error) => panic!("{}", error),
     });
 
-    let result = command("git", vec!["checkout", &base], verbose);
+    let result = command("git", &["checkout", &base], verbose);
 
     if let Err(()) = result {
         return Err(());
     }
 
-    let result = command("git", vec!["pull"], verbose);
+    let result = command("git", &["pull"], verbose);
 
     match result {
         Ok(_) => Ok(base),
@@ -65,7 +62,7 @@ fn get_default_branch(verbose: bool) -> Result<&'static str, &'static str> {
 }
 
 fn search_branch(branch: &str, verbose: bool) -> Result<(), &'static str> {
-    let result = command("git", vec!["branch", "-l", branch], verbose);
+    let result = command("git", &["branch", "-l", branch], verbose);
 
     match result {
         Ok(output) => {

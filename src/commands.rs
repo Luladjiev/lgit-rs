@@ -2,6 +2,7 @@ use std::process;
 
 pub mod branch;
 pub mod delete_branches;
+pub mod fixup;
 pub mod rebase;
 
 fn command(cmd: &str, args: &[&str], verbose: bool) -> Result<String, ()> {

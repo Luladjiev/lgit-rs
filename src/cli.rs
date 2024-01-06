@@ -27,6 +27,12 @@ pub enum Commands {
         base: Option<String>,
     },
 
+    #[command(about = "Commit as a fixup")]
+    Fixup {
+        #[arg(short, long, default_value_t = 25, help = "Number of commits to list")]
+        number: i32,
+    },
+
     #[command(about = "Delete all branches for which remotes are gone. Use with caution!")]
     DeleteBranches {
         #[arg(short, long, help = "Dry run, don't delete anything")]

@@ -1,6 +1,3 @@
-Sure, here's an improved version of your `README.md`:
-
-```markdown
 # lgit-rs
 
 `lgit-rs` is a powerful command-line interface (CLI) tool, developed in Rust, designed to simplify the management of git

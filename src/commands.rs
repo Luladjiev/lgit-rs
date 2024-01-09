@@ -5,56 +5,48 @@ pub mod delete_branches;
 pub mod fixup;
 pub mod rebase;
 
-fn command(cmd: &str, args: &[&str], verbose: bool) -> Result<String, ()> {
-    let output = process::Command::new(cmd)
-        .args(args)
-        .output()
-        .expect("Failed to execute command");
+pub trait Exec {
+    fn exec(&self, args: &[&str], verbose: bool) -> Result<String, ()>;
+}
 
-    if verbose {
-        println!("Executing: {} {}", cmd, args.join(" "));
-    }
+pub struct Cmd {}
 
-    if output.status.success() {
-        let output = String::from_utf8(output.stdout).unwrap();
+impl Exec for Cmd {
+    fn exec(&self, args: &[&str], verbose: bool) -> Result<String, ()> {
+        let cmd = "git";
+        let output = process::Command::new(cmd)
+            .args(args)
+            .output()
+            .expect("Failed to execute command");
 
         if verbose {
-            println!("{output}");
+            println!("Executing: {} {}\n", cmd, args.join(" "));
         }
 
-        Ok(output)
-    } else {
-        if verbose {
-            println!("{}", String::from_utf8(output.stderr).unwrap());
-        }
+        if output.status.success() {
+            let output = String::from_utf8(output.stdout).unwrap();
 
-        Err(())
+            if verbose {
+                println!("{output}");
+            }
+
+            Ok(output)
+        } else {
+            if verbose {
+                println!("{}", String::from_utf8(output.stderr).unwrap());
+            }
+
+            Err(())
+        }
     }
 }
 
-fn refresh_base(base: Option<String>, verbose: bool) -> Result<String, ()> {
-    let base = base.unwrap_or_else(|| match get_default_branch(verbose) {
-        Ok(branch) => String::from(branch),
-        Err(error) => panic!("{}", error),
-    });
-
-    let result = command("git", &["checkout", &base], verbose);
-
-    if let Err(()) = result {
-        return Err(());
-    }
-
-    let result = command("git", &["pull"], verbose);
-
-    match result {
-        Ok(_) => Ok(base),
-        Err(()) => Err(()),
-    }
-}
-
-fn get_default_branch(verbose: bool) -> Result<&'static str, &'static str> {
+pub fn get_default_branch<T: Exec>(
+    command: &T,
+    verbose: bool,
+) -> Result<&'static str, &'static str> {
     for branch in ["main", "master"] {
-        if search_branch(branch, verbose).is_ok() {
+        if search_branch(command, branch, verbose).is_ok() {
             return Ok(branch);
         }
     }
@@ -62,8 +54,30 @@ fn get_default_branch(verbose: bool) -> Result<&'static str, &'static str> {
     Err("Failed to determine default branch")
 }
 
-fn search_branch(branch: &str, verbose: bool) -> Result<(), &'static str> {
-    let result = command("git", &["branch", "-l", branch], verbose);
+pub fn get_base<T: Exec>(command: &T, base: Option<String>, verbose: bool) -> String {
+    base.unwrap_or_else(|| match get_default_branch(command, verbose) {
+        Ok(branch) => branch.to_string(),
+        Err(error) => panic!("{}", error),
+    })
+}
+
+fn refresh_base<'a, T: Exec>(command: &T, base: &'a str, verbose: bool) -> Result<&'a str, ()> {
+    let result = command.exec(&["checkout", base], verbose);
+
+    if let Err(()) = result {
+        return Err(());
+    }
+
+    let result = command.exec(&["pull"], verbose);
+
+    match result {
+        Ok(_) => Ok(base),
+        Err(()) => Err(()),
+    }
+}
+
+fn search_branch<T: Exec>(command: &T, branch: &str, verbose: bool) -> Result<(), &'static str> {
+    let result = command.exec(&["branch", "-l", branch], verbose);
 
     match result {
         Ok(output) => {

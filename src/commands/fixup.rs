@@ -1,12 +1,12 @@
 use inquire::{InquireError, Select};
 
-use crate::commands::command;
+use crate::commands::Exec;
 
-pub fn run(number: i32, verbose: bool) -> Result<(), &'static str> {
-    let commit = get_sha(number, verbose);
+pub fn run<T: Exec>(command: &T, number: i32, verbose: bool) -> Result<(), &'static str> {
+    let commit = get_sha(command, number, verbose);
     let commit = commit?;
 
-    let result = command("git", &["commit", "--fixup", commit.as_str()], verbose);
+    let result = command.exec(&["commit", "--fixup", commit.as_str()], verbose);
 
     match result {
         Ok(_) => Ok(()),
@@ -14,8 +14,8 @@ pub fn run(number: i32, verbose: bool) -> Result<(), &'static str> {
     }
 }
 
-fn get_sha(number: i32, verbose: bool) -> Result<String, &'static str> {
-    let options = get_log(number, verbose);
+fn get_sha<T: Exec>(command: &T, number: i32, verbose: bool) -> Result<String, &'static str> {
+    let options = get_log(command, number, verbose);
     let options = options?;
     let options = options.iter().map(String::as_str).collect();
 
@@ -31,9 +31,8 @@ fn get_sha(number: i32, verbose: bool) -> Result<String, &'static str> {
     }
 }
 
-fn get_log(number: i32, verbose: bool) -> Result<Vec<String>, &'static str> {
-    let log = command(
-        "git",
+fn get_log<T: Exec>(command: &T, number: i32, verbose: bool) -> Result<Vec<String>, &'static str> {
+    let log = command.exec(
         &["log", "--format=%h %s", "-n", &number.to_string()],
         verbose,
     );

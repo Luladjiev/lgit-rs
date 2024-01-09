@@ -15,7 +15,7 @@ fn main() {
         Some(Commands::Branch { name, base }) => {
             let base = get_base(&command, base, cli.verbose);
 
-            branch::run(&command, name, base, cli.verbose)
+            branch::run(&command, &name, &base, cli.verbose)
         }
         Some(Commands::Rebase { base }) => {
             let base = get_base(&command, base, cli.verbose);

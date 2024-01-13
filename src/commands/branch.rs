@@ -6,7 +6,7 @@ pub fn run<T: Exec>(
     base: &str,
     verbose: bool,
 ) -> Result<(), &'static str> {
-    let result = refresh_base(command, &base, verbose);
+    let result = refresh_base(command, base, verbose);
 
     if let Err(()) = result {
         return Err("Failed to refresh base branch");

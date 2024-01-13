@@ -12,18 +12,6 @@ repositories. It provides a set of commands that streamline common git operation
 
 ## Requirements
 
-### Cargo
-
-`lgit-rs` is developed using the Rust programming language and the Cargo package manager. You can check if Cargo is
-installed by running the following command:
-
-```bash
-cargo --version
-```
-
-If Cargo is not installed, you can install it by following the instructions on
-the [official website](https://www.rust-lang.org/tools/install).
-
 ### Git
 
 `lgit-rs` requires git to be installed on your system. You can check if git is installed by running the following
@@ -35,7 +23,12 @@ git --version
 
 ## Installation
 
-Installing `lgit-rs` is as simple as running a single command with cargo:
+[Archives of precompiled binaries for lgit are available for Windows, macOS and Linux.](https://github.com/Luladjiev/lgit-rs/releases)
+
+### Using Cargo
+
+Installing `lgit-rs` through Cargo is the easiest way to get started. You can install it by running the following
+command:
 
 ```bash
 cargo install lgit
@@ -57,7 +50,10 @@ lgit branch --help
 
 ## Development
 
-`lgit-rs` is developed using the Rust programming language and the Cargo package manager. You can clone the repository
+`lgit-rs` is developed using the [Rust programming language](https://www.rust-lang.org/) and
+the [Cargo package manager](https://doc.rust-lang.org/cargo/).
+
+You can clone the repository
 and run the project locally using the following commands:
 
 ```bash

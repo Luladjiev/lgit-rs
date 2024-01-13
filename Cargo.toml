@@ -13,5 +13,5 @@ keywords = ["git", "cli", "rust"]
 
 [dependencies]
 clap = { version = "4.4.14", features = ["derive"] }
-inquire = "0.6.2"
+dialoguer = { version = "0.11.0", features = ["fuzzy-select"] }
 mockall = "0.12.1"

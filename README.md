@@ -12,15 +12,6 @@ repositories. It provides a set of commands that streamline common git operation
 
 ## Requirements
 
-### Git
-
-`lgit-rs` requires git to be installed on your system. You can check if git is installed by running the following
-command:
-
-```bash
-git --version
-```
-
 ### Cargo
 
 `lgit-rs` is developed using the Rust programming language and the Cargo package manager. You can check if Cargo is
@@ -32,6 +23,15 @@ cargo --version
 
 If Cargo is not installed, you can install it by following the instructions on
 the [official website](https://www.rust-lang.org/tools/install).
+
+### Git
+
+`lgit-rs` requires git to be installed on your system. You can check if git is installed by running the following
+command:
+
+```bash
+git --version
+```
 
 ## Installation
 

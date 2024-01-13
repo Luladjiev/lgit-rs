@@ -1,4 +1,5 @@
-use inquire::{InquireError, Select};
+use dialoguer::theme::ColorfulTheme;
+use dialoguer::FuzzySelect;
 
 use crate::commands::Exec;
 
@@ -17,18 +18,33 @@ pub fn run<T: Exec>(command: &T, number: i32, verbose: bool) -> Result<(), &'sta
 fn get_sha<T: Exec>(command: &T, number: i32, verbose: bool) -> Result<String, &'static str> {
     let options = get_log(command, number, verbose);
     let options = options?;
-    let options = options.iter().map(String::as_str).collect();
 
-    let ans: Result<&str, InquireError> =
-        Select::new("Which commit you want to fix?", options).prompt();
+    let option = FuzzySelect::with_theme(&ColorfulTheme::default())
+        .with_prompt("Which commit you want to fix?")
+        .default(0)
+        .items(&options)
+        .interact();
 
-    match ans {
-        Ok(choice) => {
-            let sha = choice.split_whitespace().next().unwrap();
-            Ok(sha.to_string())
+    if let Err(err) = option {
+        if verbose {
+            println!("{err}");
         }
-        Err(_) => Err("There was an error getting the commit sha"),
+
+        return Err("There was an error determining the commit");
     }
+
+    let option = option.unwrap();
+    let option = options.get(option);
+
+    if option.is_none() {
+        return Err("There was an error getting the commit");
+    }
+
+    let option = option.unwrap();
+
+    let sha = option.split_whitespace().next().unwrap();
+
+    Ok(sha.to_string())
 }
 
 fn get_log<T: Exec>(command: &T, number: i32, verbose: bool) -> Result<Vec<String>, &'static str> {

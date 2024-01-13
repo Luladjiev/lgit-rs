@@ -1,17 +1,19 @@
-use crate::commands::{command, refresh_base};
+use crate::commands::{refresh_base, Exec};
 
-pub fn run(base: Option<String>, verbose: bool) -> Result<(), &'static str> {
-    let result = refresh_base(base, verbose);
+pub fn run<T: Exec>(command: &T, base: &str, verbose: bool) -> Result<(), &'static str> {
+    let result = refresh_base(command, base, verbose);
 
-    let Ok(base) = result else { return Err("Failed to refresh base branch"); };
+    let Ok(base) = result else {
+        return Err("Failed to refresh base branch");
+    };
 
-    let result = command("git", &["checkout", "-"], verbose);
+    let result = command.exec(&["checkout", "-"], verbose);
 
     if let Err(()) = result {
         return Err("Failed to checkout back to initial branch");
     }
 
-    let result = command("git", &["rebase", &base], verbose);
+    let result = command.exec(&["rebase", base], verbose);
 
     if let Err(()) = result {
         return Err("Failed to rebase");

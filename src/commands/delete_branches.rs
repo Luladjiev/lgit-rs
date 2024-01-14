@@ -1,7 +1,7 @@
 use crate::commands::Exec;
 
 pub fn run<T: Exec>(command: &T, dry_run: bool, verbose: bool) -> Result<(), &str> {
-    match try_delete_branches(command, dry_run, verbose) {
+    match delete_branches(command, dry_run, verbose) {
         Ok(output) => {
             println!("{output}");
             Ok(())
@@ -10,63 +10,51 @@ pub fn run<T: Exec>(command: &T, dry_run: bool, verbose: bool) -> Result<(), &st
     }
 }
 
-fn try_delete_branches<T: Exec>(
+fn delete_branches<T: Exec>(
     command: &T,
     dry_run: bool,
     verbose: bool,
 ) -> Result<String, &'static str> {
-    let result = command.exec(&["fetch", "--prune"], verbose);
+    command
+        .exec(&["fetch", "--prune"], verbose)
+        .map_err(|()| "Failed to fetch")?;
 
-    if let Err(()) = result {
-        return Err("Failed to fetch");
-    }
-
-    let branches = command.exec(&["branch", "-vv"], verbose);
-
-    let Ok(branches) = branches else {
-        return Err("Failed to get branches");
-    };
+    let branches = command
+        .exec(&["branch", "-vv"], verbose)
+        .map_err(|()| "Failed to get branches")?;
 
     let mut result = Vec::new();
 
     for line in branches.lines() {
-        if line.starts_with('*') {
+        if line.starts_with('*') || !line.contains(": gone]") {
             continue;
         }
 
-        if line.contains(": gone]") {
-            let branch_split = line.split_whitespace().next();
+        let branch_name = line
+            .split_whitespace()
+            .next()
+            .ok_or("Failed to parse branch name")?;
 
-            let Some(branch_name) = branch_split else {
-                return Err("Failed to parse branch name");
-            };
-
-            if !dry_run {
-                let output = command.exec(&["branch", "-D", branch_name], verbose);
-
-                if let Err(()) = output {
-                    return Err("Failed to delete branch");
-                }
-            }
-
-            result.push(format!("Deleted branch {branch_name}"));
+        if !dry_run {
+            command
+                .exec(&["branch", "-D", branch_name], verbose)
+                .map_err(|()| "Failed to delete branch")?;
         }
+
+        result.push(format!("Deleted branch {branch_name}"));
     }
 
-    let message = if result.is_empty() {
+    Ok(if result.is_empty() {
         "No branches to delete".to_string()
     } else {
         result.join("\n")
-    };
-
-    Ok(message)
+    })
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::commands::delete_branches::delete_branches;
     use crate::commands::MockCmd;
-
-    use super::*;
 
     fn cmd_fetch_prune() -> MockCmd {
         let mut command = MockCmd::new();
@@ -91,10 +79,10 @@ mod tests {
     }
 
     #[test]
-    fn try_delete_branches_does_not_delete_when_dry_run() {
+    fn delete_branches_does_not_delete_when_dry_run() {
         let command = cmd_fetch_prune_branch();
 
-        let result = try_delete_branches(&command, true, false);
+        let result = delete_branches(&command, true, false);
 
         assert!(result.is_ok());
         assert_eq!(
@@ -104,7 +92,7 @@ mod tests {
     }
 
     #[test]
-    fn try_delete_branches_does_not_delete_current_branch() {
+    fn delete_branches_does_not_delete_current_branch() {
         let mut command = cmd_fetch_prune_branch();
         command
             .expect_exec()
@@ -117,7 +105,7 @@ mod tests {
             .times(1)
             .returning(|_, _| Ok(String::new()));
 
-        let result = try_delete_branches(&command, false, false);
+        let result = delete_branches(&command, false, false);
 
         assert!(result.is_ok());
         assert_eq!(
@@ -127,7 +115,7 @@ mod tests {
     }
 
     #[test]
-    fn try_delete_branches_returns_error_when_delete_fails() {
+    fn delete_branches_returns_error_when_delete_fails() {
         let mut command = cmd_fetch_prune_branch();
         command
             .expect_exec()
@@ -135,13 +123,13 @@ mod tests {
             .times(1)
             .returning(|_, _| Err(()));
 
-        let result = try_delete_branches(&command, false, false);
+        let result = delete_branches(&command, false, false);
 
         assert!(result.is_err());
     }
 
     #[test]
-    fn try_delete_branches_no_branches_to_delete() {
+    fn delete_branches_no_branches_to_delete() {
         let mut command = cmd_fetch_prune();
         command
             .expect_exec()
@@ -149,7 +137,7 @@ mod tests {
             .times(1)
             .returning(|_, _| Ok("* branch3 [origin/branch3]".to_string()));
 
-        let result = try_delete_branches(&command, false, false);
+        let result = delete_branches(&command, false, false);
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), "No branches to delete");

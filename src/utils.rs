@@ -21,32 +21,19 @@ pub fn get_base<T: Exec>(command: &T, base: Option<String>, verbose: bool) -> St
 }
 
 pub fn refresh_base<'a, T: Exec>(command: &T, base: &'a str, verbose: bool) -> Result<&'a str, ()> {
-    let result = command.exec(&["checkout", base], verbose);
-
-    if let Err(()) = result {
-        return Err(());
-    }
-
-    let result = command.exec(&["pull"], verbose);
-
-    match result {
-        Ok(_) => Ok(base),
-        Err(()) => Err(()),
-    }
+    command.exec(&["checkout", base], verbose)?;
+    command.exec(&["pull"], verbose).map(|_| base)
 }
 
 fn search_branch<T: Exec>(command: &T, branch: &str, verbose: bool) -> Result<(), &'static str> {
-    let result = command.exec(&["branch", "-l", branch], verbose);
+    let result = command
+        .exec(&["branch", "-l", branch], verbose)
+        .map_err(|()| "Failed to list branch")?;
 
-    match result {
-        Ok(output) => {
-            if output.is_empty() {
-                Err("Branch not found")
-            } else {
-                Ok(())
-            }
-        }
-        Err(()) => Err("Failed to list branch"),
+    if result.is_empty() {
+        Err("Branch not found")
+    } else {
+        Ok(())
     }
 }
 

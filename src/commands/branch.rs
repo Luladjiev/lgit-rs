@@ -7,19 +7,41 @@ pub fn run<T: Exec>(
     base: &str,
     verbose: bool,
 ) -> Result<(), &'static str> {
-    let result = refresh_base(command, base, verbose);
+    refresh_base(command, base, verbose).map_err(|()| "Failed to refresh base branch")?;
 
-    if let Err(()) = result {
-        return Err("Failed to refresh base branch");
-    }
-
-    let result = command.exec(&["checkout", "-b", &name], verbose);
-
-    if let Err(()) = result {
-        return Err("Failed to create branch");
-    }
+    command
+        .exec(&["checkout", "-b", &name], verbose)
+        .map_err(|()| "Failed to create branch")?;
 
     println!("Created branch {name}");
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::commands::branch::run;
+    use crate::commands::MockCmd;
+
+    #[test]
+    fn test_run_with_master_branch() {
+        let mut command = MockCmd::new();
+        command
+            .expect_exec()
+            .times(1)
+            .withf(|args, verbose| args == ["checkout", "main"] && !(*verbose))
+            .returning(|_, _| Ok(String::new()));
+        command
+            .expect_exec()
+            .times(1)
+            .withf(|args, verbose| args == ["pull"] && !(*verbose))
+            .returning(|_, _| Ok(String::new()));
+        command
+            .expect_exec()
+            .times(1)
+            .withf(|args, verbose| args == ["checkout", "-b", "test"] && !(*verbose))
+            .returning(|_, _| Ok(String::new()));
+
+        assert_eq!(run(&command, "test", "main", false), Ok(()));
+    }
 }

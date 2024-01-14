@@ -15,20 +15,17 @@ pub fn run<T: Exec>(
     ];
     let arg: String;
 
-    if let Some(number) = number {
-        arg = format!("HEAD~{number}");
-
-        args.push(&arg);
-    } else {
-        args.push(base);
+    match number {
+        Some(number) => {
+            arg = format!("HEAD~{number}");
+            args.push(&arg);
+        }
+        None => args.push(base),
     }
 
-    let result = cmd.exec(&args, verbose);
-
-    match result {
-        Ok(_) => Ok(()),
-        Err(()) => Err("Failed to auto squash commits"),
-    }
+    cmd.exec(&args, verbose)
+        .map(|_| ())
+        .map_err(|()| "Failed to auto squash commits")
 }
 
 #[cfg(test)]

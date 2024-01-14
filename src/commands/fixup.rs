@@ -3,7 +3,7 @@ use dialoguer::FuzzySelect;
 
 use crate::commands::Exec;
 
-pub fn run<T: Exec>(command: &T, number: i32, verbose: bool) -> Result<(), &'static str> {
+pub fn run<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<(), &'static str> {
     let commit = get_sha(command, number, verbose);
     let commit = commit?;
 
@@ -15,7 +15,7 @@ pub fn run<T: Exec>(command: &T, number: i32, verbose: bool) -> Result<(), &'sta
     }
 }
 
-fn get_sha<T: Exec>(command: &T, number: i32, verbose: bool) -> Result<String, &'static str> {
+fn get_sha<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<String, &'static str> {
     let options = get_log(command, number, verbose);
     let options = options?;
 
@@ -47,7 +47,7 @@ fn get_sha<T: Exec>(command: &T, number: i32, verbose: bool) -> Result<String, &
     Ok(sha.to_string())
 }
 
-fn get_log<T: Exec>(command: &T, number: i32, verbose: bool) -> Result<Vec<String>, &'static str> {
+fn get_log<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<Vec<String>, &'static str> {
     let log = command.exec(
         &["log", "--format=%h %s", "-n", &number.to_string()],
         verbose,

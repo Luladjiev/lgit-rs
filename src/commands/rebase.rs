@@ -1,4 +1,5 @@
-use crate::commands::{refresh_base, Exec};
+use crate::commands::Exec;
+use crate::utils::refresh_base;
 
 pub fn run<T: Exec>(command: &T, base: &str, verbose: bool) -> Result<(), &'static str> {
     let result = refresh_base(command, base, verbose);

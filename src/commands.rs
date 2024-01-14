@@ -2,6 +2,7 @@ use std::process;
 
 use mockall::mock;
 
+pub mod autosquash;
 pub mod branch;
 pub mod delete_branches;
 pub mod fixup;

@@ -15,7 +15,8 @@ pub enum Commands {
     #[command(
         about = "Rebase branch to combine fixup / squash commits with their corresponding commits",
         long_about = "Rebase branch to combine fixup / squash commits with their corresponding commits.\n\n\
-            Requires --number to be passed if it's used on the main / master branch."
+            Requires --number to be passed if it's used on the main / master branch.",
+        visible_alias = "as"
     )]
     Autosquash {
         #[arg(short, long, help = "Number of commits to rebase")]
@@ -25,7 +26,10 @@ pub enum Commands {
         base: Option<String>,
     },
 
-    #[command(about = "Create a new branch from latest BASE branch")]
+    #[command(
+        about = "Create a new branch from latest BASE branch",
+        visible_alias = "b"
+    )]
     Branch {
         #[arg(help = "Name of the branch to create")]
         name: String,
@@ -40,13 +44,16 @@ pub enum Commands {
         dry_run: bool,
     },
 
-    #[command(about = "Commit as a fixup")]
+    #[command(about = "Commit as a fixup", visible_alias = "f")]
     Fixup {
         #[arg(short, long, default_value_t = 25, help = "Number of commits to list")]
         number: u32,
     },
 
-    #[command(about = "Rebase current branch on top of latest BASE branch")]
+    #[command(
+        about = "Rebase current branch on top of latest BASE branch",
+        visible_alias = "r"
+    )]
     Rebase {
         #[arg(short, long, help = "Base branch to rebase onto")]
         base: Option<String>,

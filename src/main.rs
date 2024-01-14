@@ -1,10 +1,12 @@
 use clap::Parser;
 
 use crate::cli::{Args, Commands};
-use crate::commands::{branch, delete_branches, get_base, rebase, Cmd};
+use crate::commands::{branch, delete_branches, rebase, Cmd};
+use crate::utils::get_base;
 
 mod cli;
 mod commands;
+mod utils;
 
 fn main() {
     let cli = Args::parse();

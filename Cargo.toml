@@ -1,6 +1,6 @@
 [package]
 name = "lgit"
-version = "0.7.0"
+version = "0.7.1"
 edition = "2021"
 authors = ["Peter Luladjiev<lgit-rs@luladjiev.com>"]
 description = "CLI tool for managing git repositories"
@@ -15,4 +15,3 @@ keywords = ["git", "cli", "rust"]
 clap = { version = "4.4.14", features = ["derive"] }
 dialoguer = { version = "0.11.0", features = ["fuzzy-select"] }
 mockall = "0.12.1"
-regex = "1.10.2"

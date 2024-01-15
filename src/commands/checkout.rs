@@ -1,6 +1,5 @@
 use dialoguer::theme::ColorfulTheme;
 use dialoguer::FuzzySelect;
-use regex::Regex;
 
 use crate::commands::Exec;
 
@@ -29,15 +28,19 @@ fn get_branches<T: Exec>(cmd: &T, verbose: bool) -> Result<String, &str> {
         .map(String::from)
         .collect();
 
-    let remotes = remotes.join("|");
-    let remotes = format!(r"refs(\/remotes)?\/(heads|{remotes})\/");
-    let re = Regex::new(&remotes).unwrap();
-
     let mut branches: Vec<String> = cmd
         .exec(&["branch", "-a", "--format", "%(refname)"], verbose)
         .map_err(|()| "Failed to list branches")?
         .lines()
-        .map(|line| re.replace(line, "").trim().to_string())
+        .map(|line| {
+            let mut line = String::from(line);
+
+            for remote in &remotes {
+                line = line.replace(&format!("refs/remotes/{}/", &remote), "");
+            }
+
+            line.replace("refs/heads/", "").trim().to_string()
+        })
         .filter(|branch| branch != "HEAD")
         .collect();
 

@@ -4,6 +4,7 @@ use mockall::mock;
 
 pub mod autosquash;
 pub mod branch;
+pub mod checkout;
 pub mod delete_branches;
 pub mod fixup;
 pub mod rebase;

@@ -1,7 +1,7 @@
 use clap::Parser;
 
 use crate::cli::{Args, Commands};
-use crate::commands::{autosquash, branch, delete_branches, rebase, Cmd};
+use crate::commands::{autosquash, branch, checkout, delete_branches, rebase, Cmd};
 use crate::utils::get_base;
 
 mod cli;
@@ -24,6 +24,7 @@ fn main() {
 
             branch::run(&command, &name, &base, cli.verbose)
         }
+        Some(Commands::Checkout { name }) => checkout::run(&command, name, cli.verbose),
         Some(Commands::DeleteBranches { dry_run }) => {
             delete_branches::run(&command, dry_run, cli.verbose)
         }

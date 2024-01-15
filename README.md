@@ -6,10 +6,11 @@ repositories. It provides a set of commands that streamline common git operation
 ## Features
 
 - **Autosquash**: Automatically squash all fixup commits in the current branch.
-- **Branch**: Easily create a new branch from the latest BASE branch.
+- **Branch**: Quickly create a new branch from a freshly pulled BASE branch.
+- **Checkout**:  Checkout a branch by name, or by selecting from a list of all branches.
 - **DeleteBranches**: Safely delete all branches for which remotes are gone. Use with caution!
 - **Fixup**: Commit as a fixup, simplifying your commit history.
-- **Rebase**: Rebase the current branch on top of the latest BASE branch with a single command.
+- **Rebase**: Rebase the current branch on top of freshly pulled BASE branch with a single command.
 
 ## Requirements
 

@@ -38,6 +38,12 @@ pub enum Commands {
         base: Option<String>,
     },
 
+    #[command(about = "Switch branches", visible_alias = "co")]
+    Checkout {
+        #[arg(help = "Name of the branch to checkout")]
+        name: Option<String>,
+    },
+
     #[command(about = "Delete all branches for which remotes are gone. Use with caution!")]
     DeleteBranches {
         #[arg(short, long, help = "Dry run, don't delete anything")]

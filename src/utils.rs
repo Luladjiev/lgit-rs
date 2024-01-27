@@ -37,6 +37,22 @@ fn search_branch<T: Exec>(command: &T, branch: &str, verbose: bool) -> Result<()
     }
 }
 
+pub fn stash<T: Exec>(command: &T, verbose: bool) -> Result<(), &'static str> {
+    command
+        .exec(&["stash", "-u"], verbose)
+        .map_err(|()| "Failed to stash changes")?;
+
+    Ok(())
+}
+
+pub fn unstash<T: Exec>(command: &T, verbose: bool) -> Result<(), &'static str> {
+    command
+        .exec(&["stash", "pop"], verbose)
+        .map_err(|()| "Failed to unstash changes")?;
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use crate::commands::MockCmd;

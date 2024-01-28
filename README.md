@@ -1,6 +1,6 @@
 # lgit-rs
 
-`lgit-rs` is a powerful command-line interface (CLI) tool, designed to simplify the management of git
+`lgit-rs` is a powerful, opinionated command-line interface (CLI) tool, designed to simplify the management of git
 repositories. It provides a set of commands that streamline common git operations, making your workflow more efficient.
 
 ## Features
@@ -34,6 +34,14 @@ command:
 
 ```bash
 cargo install lgit
+```
+
+### Building from source
+
+You can also build `lgit-rs` from source by running the following command:
+
+```bash
+cargo install --path .
 ```
 
 ## Usage

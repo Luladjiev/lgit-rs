@@ -7,7 +7,7 @@ pub fn run<T: Exec>(
     base: &str,
     verbose: bool,
 ) -> Result<(), &'static str> {
-    stash(command, verbose)?;
+    let unsaved_changes = stash(command, verbose)?;
 
     refresh_base(command, base, verbose).map_err(|()| "Failed to refresh base branch")?;
 
@@ -15,7 +15,9 @@ pub fn run<T: Exec>(
         .exec(&["checkout", "-b", &name], verbose)
         .map_err(|()| "Failed to create branch")?;
 
-    unstash(command, verbose)?;
+    if unsaved_changes {
+        unstash(command, verbose)?;
+    }
 
     println!("Created branch {name}");
 
@@ -33,7 +35,7 @@ mod tests {
         command
             .expect_exec()
             .times(1)
-            .withf(|args, verbose| args == ["stash", "-u"] && !(*verbose))
+            .withf(|args, verbose| args == ["status", "--porcelain"] && !(*verbose))
             .returning(|_, _| Ok(String::new()));
         command
             .expect_exec()
@@ -49,11 +51,6 @@ mod tests {
             .expect_exec()
             .times(1)
             .withf(|args, verbose| args == ["checkout", "-b", "test"] && !(*verbose))
-            .returning(|_, _| Ok(String::new()));
-        command
-            .expect_exec()
-            .times(1)
-            .withf(|args, verbose| args == ["stash", "pop"] && !(*verbose))
             .returning(|_, _| Ok(String::new()));
         assert_eq!(run(&command, "test", "main", false), Ok(()));
     }

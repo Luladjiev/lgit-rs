@@ -1,6 +1,6 @@
 [package]
 name = "lgit"
-version = "0.7.2"
+version = "0.7.3"
 edition = "2021"
 authors = ["Peter Luladjiev<lgit-rs@luladjiev.com>"]
 description = "CLI tool for managing git repositories"

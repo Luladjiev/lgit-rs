@@ -37,12 +37,20 @@ fn search_branch<T: Exec>(command: &T, branch: &str, verbose: bool) -> Result<()
     }
 }
 
-pub fn stash<T: Exec>(command: &T, verbose: bool) -> Result<(), &'static str> {
+pub fn stash<T: Exec>(command: &T, verbose: bool) -> Result<bool, &'static str> {
+    let result = command
+        .exec(&["status", "--porcelain"], verbose)
+        .map_err(|()| "Failed to retrieve branch status")?;
+
+    if result.is_empty() {
+        return Ok(false);
+    }
+
     command
         .exec(&["stash", "-u"], verbose)
         .map_err(|()| "Failed to stash changes")?;
 
-    Ok(())
+    Ok(true)
 }
 
 pub fn unstash<T: Exec>(command: &T, verbose: bool) -> Result<(), &'static str> {

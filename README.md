@@ -8,6 +8,7 @@ repositories. It provides a set of commands that streamline common git operation
 - **Autosquash**: Automatically squash all fixup commits in the current branch.
 - **Branch**: Quickly create a new branch from a freshly pulled BASE branch.
 - **Checkout**:  Checkout a branch by name, or by selecting from a list of all branches.
+- **CherryPick**: Interactively select and cherry-pick commits from another branch.
 - **DeleteBranches**: Safely delete all branches for which remotes are gone. Use with caution!
 - **Fixup**: Commit as a fixup, simplifying your commit history.
 - **Rebase**: Rebase the current branch on top of freshly pulled BASE branch with a single command.

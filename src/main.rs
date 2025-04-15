@@ -1,7 +1,7 @@
 use clap::Parser;
 
 use crate::cli::{Args, Commands};
-use crate::commands::{autosquash, branch, checkout, delete_branches, rebase, Cmd};
+use crate::commands::{autosquash, branch, checkout, cherry_pick, delete_branches, rebase, Cmd};
 use crate::utils::get_base;
 
 mod cli;
@@ -33,6 +33,9 @@ fn main() {
             let base = get_base(&command, base, cli.verbose);
 
             rebase::run(&command, &base, cli.verbose)
+        }
+        Some(Commands::CherryPick { branch, number }) => {
+            cherry_pick::run(&command, &branch, number, cli.verbose)
         }
         None => Err("No command specified, please run with --help for more info"),
     };

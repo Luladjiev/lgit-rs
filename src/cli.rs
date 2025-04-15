@@ -64,4 +64,16 @@ pub enum Commands {
         #[arg(short, long, help = "Base branch to rebase onto")]
         base: Option<String>,
     },
+
+    #[command(
+        about = "Interactively cherry-pick commits from another branch",
+        visible_alias = "cp"
+    )]
+    CherryPick {
+        #[arg(help = "Branch to cherry-pick commits from")]
+        branch: String,
+
+        #[arg(short, long, default_value_t = 25, help = "Number of commits to show")]
+        number: u32,
+    },
 }

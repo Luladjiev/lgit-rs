@@ -2,7 +2,7 @@ use dialoguer::MultiSelect;
 
 use crate::commands::Exec;
 
-pub fn run(cmd: &dyn Exec, branch: &str, number: u32, verbose: bool) -> Result<(), String> {
+pub fn run(cmd: &dyn Exec, branch: &str, number: u32, verbose: bool) -> Result<(), Option<String>> {
     let commits = get_commits(cmd, branch, number, verbose)?;
 
     let selections = MultiSelect::new()
@@ -12,7 +12,7 @@ pub fn run(cmd: &dyn Exec, branch: &str, number: u32, verbose: bool) -> Result<(
         .map_err(|_| "Failed to get user input".to_string())?;
 
     if selections.is_empty() {
-        return Err("No commits selected".to_string());
+        return Err(Some("No commits selected".to_string()));
     }
 
     let selected_commits: Result<Vec<&str>, String> = selections
@@ -30,15 +30,15 @@ pub fn run(cmd: &dyn Exec, branch: &str, number: u32, verbose: bool) -> Result<(
                 println!("{err}");
             }
 
-            return Err("Failed to parse commits format".to_string());
+            return Err(Some("Failed to parse commits format".to_string()));
         }
     };
 
     selected_commits.reverse();
 
     for commit in selected_commits {
-        if cmd.exec(&["cherry-pick", commit], verbose).is_err() {
-            return Err("Failed to cherry-pick commit".to_string());
+        if cmd.exec(&["cherry-pick", commit], verbose, false).is_err() {
+            return Err(Some("Failed to cherry-pick commit".to_string()));
         }
     }
 
@@ -60,6 +60,7 @@ fn get_commits(
                 &format!("-n {number}"),
             ],
             verbose,
+            false,
         )
         .map_err(|()| "Failed to get commit history".to_string())?;
 

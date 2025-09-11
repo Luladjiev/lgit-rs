@@ -1,9 +1,6 @@
 use crate::commands::Exec;
 
-pub fn get_default_branch<T: Exec>(
-    command: &T,
-    verbose: bool,
-) -> Result<&'static str, String> {
+pub fn get_default_branch<T: Exec>(command: &T, verbose: bool) -> Result<&'static str, String> {
     for branch in ["main", "master"] {
         if search_branch(command, branch, verbose).is_ok() {
             return Ok(branch);
@@ -21,17 +18,17 @@ pub fn get_base<T: Exec>(command: &T, base: Option<String>, verbose: bool) -> St
 }
 
 pub fn refresh_base<'a, T: Exec>(command: &T, base: &'a str, verbose: bool) -> Result<&'a str, ()> {
-    command.exec(&["checkout", base], verbose)?;
-    command.exec(&["pull"], verbose).map(|_| base)
+    command.exec(&["checkout", base], verbose, false)?;
+    command.exec(&["pull"], verbose, false).map(|_| base)
 }
 
-fn search_branch<T: Exec>(command: &T, branch: &str, verbose: bool) -> Result<(), String> {
+fn search_branch<T: Exec>(command: &T, branch: &str, verbose: bool) -> Result<(), Option<String>> {
     let result = command
-        .exec(&["branch", "-l", branch], verbose)
+        .exec(&["branch", "-l", branch], verbose, false)
         .map_err(|()| "Failed to list branch".to_string())?;
 
     if result.is_empty() {
-        Err("Branch not found".to_string())
+        Err(Some("Branch not found".to_string()))
     } else {
         Ok(())
     }
@@ -39,7 +36,7 @@ fn search_branch<T: Exec>(command: &T, branch: &str, verbose: bool) -> Result<()
 
 pub fn stash<T: Exec>(command: &T, verbose: bool) -> Result<bool, String> {
     let result = command
-        .exec(&["status", "--porcelain"], verbose)
+        .exec(&["status", "--porcelain"], verbose, false)
         .map_err(|()| "Failed to retrieve branch status".to_string())?;
 
     if result.is_empty() {
@@ -47,15 +44,15 @@ pub fn stash<T: Exec>(command: &T, verbose: bool) -> Result<bool, String> {
     }
 
     command
-        .exec(&["stash", "-u"], verbose)
+        .exec(&["stash", "-u"], verbose, false)
         .map_err(|()| "Failed to stash changes".to_string())?;
 
     Ok(true)
 }
 
-pub fn unstash<T: Exec>(command: &T, verbose: bool) -> Result<(), String> {
+pub fn unstash<T: Exec>(command: &T, verbose: bool) -> Result<(), Option<String>> {
     command
-        .exec(&["stash", "pop"], verbose)
+        .exec(&["stash", "pop"], verbose, false)
         .map_err(|()| "Failed to unstash changes".to_string())?;
 
     Ok(())
@@ -69,9 +66,11 @@ mod tests {
         let mut command = MockCmd::new();
         command
             .expect_exec()
-            .withf(|args, verbose| args == ["branch", "-l", "main"] && !(*verbose))
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["branch", "-l", "main"] && !(*verbose) && !(*inherit_stderr)
+            })
             .times(1)
-            .returning(|_, _| Ok(String::new()));
+            .returning(|_, _, _| Ok(String::new()));
 
         command
     }
@@ -80,9 +79,11 @@ mod tests {
         let mut command = MockCmd::new();
         command
             .expect_exec()
-            .withf(|args, verbose| args == ["branch", "-l", "main"] && !(*verbose))
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["branch", "-l", "main"] && !(*verbose) && !(*inherit_stderr)
+            })
             .times(1)
-            .returning(|_, _| Ok("* main".to_string()));
+            .returning(|_, _, _| Ok("* main".to_string()));
 
         command
     }
@@ -91,9 +92,11 @@ mod tests {
         let mut command = cmd_branch_not_found();
         command
             .expect_exec()
-            .withf(|args, verbose| args == ["branch", "-l", "master"] && !(*verbose))
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["branch", "-l", "master"] && !(*verbose) && !(*inherit_stderr)
+            })
             .times(1)
-            .returning(|_, _| Ok("* master".to_string()));
+            .returning(|_, _, _| Ok("* master".to_string()));
 
         command
     }
@@ -102,9 +105,11 @@ mod tests {
         let mut command = MockCmd::new();
         command
             .expect_exec()
-            .withf(|args, verbose| args == ["checkout", "main"] && !(*verbose))
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["checkout", "main"] && !(*verbose) && !(*inherit_stderr)
+            })
             .times(1)
-            .returning(|_, _| Ok(String::new()));
+            .returning(|_, _, _| Ok(String::new()));
 
         command
     }
@@ -154,9 +159,11 @@ mod tests {
         let mut command = cmd_checkout_main();
         command
             .expect_exec()
-            .withf(|args, verbose| args == ["pull"] && !(*verbose))
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["pull"] && !(*verbose) && !(*inherit_stderr)
+            })
             .times(1)
-            .returning(|_, _| Ok(String::new()));
+            .returning(|_, _, _| Ok(String::new()));
 
         let result = super::refresh_base(&command, "main", false);
 
@@ -168,9 +175,11 @@ mod tests {
         let mut command = MockCmd::new();
         command
             .expect_exec()
-            .withf(|args, verbose| args == ["checkout", "main"] && !(*verbose))
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["checkout", "main"] && !(*verbose) && !(*inherit_stderr)
+            })
             .times(1)
-            .returning(|_, _| Err(()));
+            .returning(|_, _, _| Err(()));
 
         let result = super::refresh_base(&command, "main", false);
 
@@ -182,9 +191,11 @@ mod tests {
         let mut command = cmd_checkout_main();
         command
             .expect_exec()
-            .withf(|args, verbose| args == ["pull"] && !(*verbose))
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["pull"] && !(*verbose) && !(*inherit_stderr)
+            })
             .times(1)
-            .returning(|_, _| Err(()));
+            .returning(|_, _, _| Err(()));
 
         let result = super::refresh_base(&command, "main", false);
 

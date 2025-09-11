@@ -1,4 +1,4 @@
-use std::process;
+use std::process::{self, Stdio};
 
 use mockall::mock;
 
@@ -12,37 +12,54 @@ pub mod git_fallback;
 pub mod rebase;
 
 pub trait Exec {
-    fn exec(&self, args: &[&str], verbose: bool) -> Result<String, ()>;
+    fn exec(&self, args: &[&str], verbose: bool, inherit_stdio: bool) -> Result<String, ()>;
 }
 
 pub struct Cmd {}
 
 impl Exec for Cmd {
-    fn exec(&self, args: &[&str], verbose: bool) -> Result<String, ()> {
+    fn exec(&self, args: &[&str], verbose: bool, inherit_stdio: bool) -> Result<String, ()> {
         let cmd = "git";
-        let output = process::Command::new(cmd)
-            .args(args)
-            .output()
-            .expect("Failed to execute command");
 
         if verbose {
             println!("Executing: {} {}\n", cmd, args.join(" "));
         }
 
-        if output.status.success() {
-            let output = String::from_utf8(output.stdout).unwrap();
+        match inherit_stdio {
+            true => {
+                let status = process::Command::new(cmd)
+                    .args(args)
+                    .stdout(Stdio::inherit())
+                    .stderr(Stdio::inherit())
+                    .status()
+                    .expect("Failed to execute command");
 
-            if verbose {
-                println!("{output}");
+                if status.success() {
+                    Ok(String::new())
+                } else {
+                    Err(())
+                }
             }
+            false => {
+                let output = process::Command::new(cmd)
+                    .args(args)
+                    .output()
+                    .expect("Failed to execute command");
 
-            Ok(output)
-        } else {
-            if verbose {
-                println!("{}", String::from_utf8(output.stderr).unwrap());
+                let status = output.status;
+
+                if status.success() {
+                    let output = String::from_utf8(output.stdout).unwrap();
+
+                    if verbose {
+                        println!("{output}");
+                    }
+
+                    Ok(output)
+                } else {
+                    Err(())
+                }
             }
-
-            Err(())
         }
     }
 }
@@ -51,6 +68,6 @@ mock! {
     pub Cmd {}
 
     impl Exec for Cmd {
-        fn exec<'a>(&self, args: &[&'a str], verbose: bool) -> Result<String, ()>;
+        fn exec<'a>(&self, args: &[&'a str], verbose: bool, inherit_stdio: bool) -> Result<String, ()>;
     }
 }

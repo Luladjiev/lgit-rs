@@ -12,7 +12,7 @@ pub fn run<T: Exec>(
     refresh_base(command, base, verbose).map_err(|()| "Failed to refresh base branch")?;
 
     command
-        .exec(&["checkout", "-b", &name], verbose)
+        .exec(&["checkout", "-b", name], verbose)
         .map_err(|()| "Failed to create branch")?;
 
     if unsaved_changes {

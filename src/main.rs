@@ -24,7 +24,9 @@ fn main() {
 
             branch::run(&command, &name, &base, cli.verbose)
         }
-        Some(Commands::Checkout { name }) => checkout::run(&command, name, cli.verbose),
+        Some(Commands::Checkout { name, remote, all }) => {
+            checkout::run(&command, name, remote, all, cli.verbose)
+        }
         Some(Commands::DeleteBranches { dry_run }) => {
             delete_branches::run(&command, dry_run, cli.verbose)
         }

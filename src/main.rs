@@ -42,7 +42,7 @@ fn main() {
             cherry_pick::run(&command, &branch, number, cli.verbose)
         }
         Some(Commands::External(args)) => git_fallback::run(&command, &args, cli.verbose),
-        None => Err("No command specified, please run with --help for more info"),
+        None => Err("No command specified, please run with --help for more info".to_string()),
     };
 
     if let Err(err) = result {

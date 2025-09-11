@@ -9,7 +9,7 @@ pub fn run<T: Exec>(
     remote: bool,
     all: bool,
     verbose: bool,
-) -> Result<(), &str> {
+) -> Result<(), String> {
     if let Some(name) = name {
         return do_checkout(cmd, &name, verbose);
     }
@@ -19,17 +19,17 @@ pub fn run<T: Exec>(
     do_checkout(cmd, &branch, verbose)
 }
 
-fn do_checkout<T: Exec>(cmd: &T, branch: &str, verbose: bool) -> Result<(), &'static str> {
+fn do_checkout<T: Exec>(cmd: &T, branch: &str, verbose: bool) -> Result<(), String> {
     cmd.exec(&["checkout", branch], verbose)
-        .map_err(|()| "Failed to checkout branch")?;
+        .map_err(|()| "Failed to checkout branch".to_string())?;
 
     Ok(())
 }
 
-fn get_branches<T: Exec>(cmd: &T, remote: bool, all: bool, verbose: bool) -> Result<String, &str> {
+fn get_branches<T: Exec>(cmd: &T, remote: bool, all: bool, verbose: bool) -> Result<String, String> {
     let remotes: Vec<String> = cmd
         .exec(&["remote"], verbose)
-        .map_err(|()| "Failed to get remotes")?
+        .map_err(|()| "Failed to get remotes".to_string())?
         .lines()
         .map(String::from)
         .collect();
@@ -45,7 +45,7 @@ fn get_branches<T: Exec>(cmd: &T, remote: bool, all: bool, verbose: bool) -> Res
 
     let mut branches: Vec<String> = cmd
         .exec(&branch_args, verbose)
-        .map_err(|()| "Failed to list branches")?
+        .map_err(|()| "Failed to list branches".to_string())?
         .lines()
         .map(|line| {
             let mut line = String::from(line);
@@ -65,7 +65,7 @@ fn get_branches<T: Exec>(cmd: &T, remote: bool, all: bool, verbose: bool) -> Res
     branches.dedup();
 
     if branches.is_empty() {
-        return Err("No branches found");
+        return Err("No branches found".to_string());
     }
 
     let option = FuzzySelect::with_theme(&ColorfulTheme::default())
@@ -78,13 +78,13 @@ fn get_branches<T: Exec>(cmd: &T, remote: bool, all: bool, verbose: bool) -> Res
                 println!("{err}");
             }
 
-            "There was an error determining the branch"
+            "There was an error determining the branch".to_string()
         })?;
 
     let branch = branches.get(option);
 
     if branch.is_none() {
-        return Err("There was an error getting the branch");
+        return Err("There was an error getting the branch".to_string());
     }
 
     let branch = branch.unwrap();

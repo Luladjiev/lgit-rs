@@ -5,7 +5,7 @@ pub fn run<T: Exec>(
     base: &str,
     number: Option<u32>,
     verbose: bool,
-) -> Result<(), &'static str> {
+) -> Result<(), String> {
     let mut args = vec![
         "-c",
         "sequence.editor=:", // used in order to prevent --interactive blocking the autosquash
@@ -25,7 +25,7 @@ pub fn run<T: Exec>(
 
     cmd.exec(&args, verbose)
         .map(|_| ())
-        .map_err(|()| "Failed to auto squash commits")
+        .map_err(|()| "Failed to auto squash commits".to_string())
 }
 
 #[cfg(test)]

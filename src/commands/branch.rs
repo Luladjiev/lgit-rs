@@ -6,14 +6,14 @@ pub fn run<T: Exec>(
     name: &str,
     base: &str,
     verbose: bool,
-) -> Result<(), &'static str> {
+) -> Result<(), String> {
     let unsaved_changes = stash(command, verbose)?;
 
-    refresh_base(command, base, verbose).map_err(|()| "Failed to refresh base branch")?;
+    refresh_base(command, base, verbose).map_err(|()| "Failed to refresh base branch".to_string())?;
 
     command
         .exec(&["checkout", "-b", name], verbose)
-        .map_err(|()| "Failed to create branch")?;
+        .map_err(|()| "Failed to create branch".to_string())?;
 
     if unsaved_changes {
         unstash(command, verbose)?;

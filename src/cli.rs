@@ -42,6 +42,12 @@ pub enum Commands {
     Checkout {
         #[arg(help = "Name of the branch to checkout")]
         name: Option<String>,
+
+        #[arg(short, long, help = "List only remote branches")]
+        remote: bool,
+
+        #[arg(short, long, help = "List all branches (local and remote)")]
+        all: bool,
     },
 
     #[command(about = "Delete all branches for which remotes are gone. Use with caution!")]

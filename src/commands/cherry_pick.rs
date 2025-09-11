@@ -27,7 +27,7 @@ pub fn run(cmd: &dyn Exec, branch: &str, number: u32, verbose: bool) -> Result<(
         Ok(commits) => commits,
         Err(err) => {
             if verbose {
-                println!("{}", err);
+                println!("{err}");
             }
 
             return Err("Failed to parse commits format");
@@ -37,7 +37,7 @@ pub fn run(cmd: &dyn Exec, branch: &str, number: u32, verbose: bool) -> Result<(
     selected_commits.reverse();
 
     for commit in selected_commits {
-        if let Err(_) = cmd.exec(&["cherry-pick", commit], verbose) {
+        if cmd.exec(&["cherry-pick", commit], verbose).is_err() {
             return Err("Failed to cherry-pick commit");
         }
     }
@@ -57,11 +57,11 @@ fn get_commits(
                 "log",
                 branch,
                 "--pretty=format:%h %s",
-                &format!("-n {}", number),
+                &format!("-n {number}"),
             ],
             verbose,
         )
-        .map_err(|_| "Failed to get commit history")?;
+        .map_err(|()| "Failed to get commit history")?;
 
     Ok(output.lines().map(String::from).collect())
 }

@@ -8,6 +8,7 @@ pub mod checkout;
 pub mod cherry_pick;
 pub mod delete_branches;
 pub mod fixup;
+pub mod git_fallback;
 pub mod rebase;
 
 pub trait Exec {

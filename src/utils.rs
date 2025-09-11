@@ -3,14 +3,14 @@ use crate::commands::Exec;
 pub fn get_default_branch<T: Exec>(
     command: &T,
     verbose: bool,
-) -> Result<&'static str, &'static str> {
+) -> Result<&'static str, String> {
     for branch in ["main", "master"] {
         if search_branch(command, branch, verbose).is_ok() {
             return Ok(branch);
         }
     }
 
-    Err("Failed to determine default branch")
+    Err("Failed to determine default branch".to_string())
 }
 
 pub fn get_base<T: Exec>(command: &T, base: Option<String>, verbose: bool) -> String {
@@ -25,22 +25,22 @@ pub fn refresh_base<'a, T: Exec>(command: &T, base: &'a str, verbose: bool) -> R
     command.exec(&["pull"], verbose).map(|_| base)
 }
 
-fn search_branch<T: Exec>(command: &T, branch: &str, verbose: bool) -> Result<(), &'static str> {
+fn search_branch<T: Exec>(command: &T, branch: &str, verbose: bool) -> Result<(), String> {
     let result = command
         .exec(&["branch", "-l", branch], verbose)
-        .map_err(|()| "Failed to list branch")?;
+        .map_err(|()| "Failed to list branch".to_string())?;
 
     if result.is_empty() {
-        Err("Branch not found")
+        Err("Branch not found".to_string())
     } else {
         Ok(())
     }
 }
 
-pub fn stash<T: Exec>(command: &T, verbose: bool) -> Result<bool, &'static str> {
+pub fn stash<T: Exec>(command: &T, verbose: bool) -> Result<bool, String> {
     let result = command
         .exec(&["status", "--porcelain"], verbose)
-        .map_err(|()| "Failed to retrieve branch status")?;
+        .map_err(|()| "Failed to retrieve branch status".to_string())?;
 
     if result.is_empty() {
         return Ok(false);
@@ -48,15 +48,15 @@ pub fn stash<T: Exec>(command: &T, verbose: bool) -> Result<bool, &'static str> 
 
     command
         .exec(&["stash", "-u"], verbose)
-        .map_err(|()| "Failed to stash changes")?;
+        .map_err(|()| "Failed to stash changes".to_string())?;
 
     Ok(true)
 }
 
-pub fn unstash<T: Exec>(command: &T, verbose: bool) -> Result<(), &'static str> {
+pub fn unstash<T: Exec>(command: &T, verbose: bool) -> Result<(), String> {
     command
         .exec(&["stash", "pop"], verbose)
-        .map_err(|()| "Failed to unstash changes")?;
+        .map_err(|()| "Failed to unstash changes".to_string())?;
 
     Ok(())
 }

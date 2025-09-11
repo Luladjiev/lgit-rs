@@ -3,17 +3,17 @@ use dialoguer::FuzzySelect;
 
 use crate::commands::Exec;
 
-pub fn run<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<(), &'static str> {
+pub fn run<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<(), String> {
     let commit = get_sha(command, number, verbose)?;
     let result = command.exec(&["commit", "--fixup", commit.as_str()], verbose);
 
     match result {
         Ok(_) => Ok(()),
-        Err(()) => Err("Failed to fixup commit"),
+        Err(()) => Err("Failed to fixup commit".to_string()),
     }
 }
 
-fn get_sha<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<String, &'static str> {
+fn get_sha<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<String, String> {
     let options = get_log(command, number, verbose);
     let options = options?;
 
@@ -27,13 +27,13 @@ fn get_sha<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<String, &
                 println!("{err}");
             }
 
-            "There was an error determining the commit"
+            "There was an error determining the commit".to_string()
         })?;
 
     let option = options.get(option);
 
     if option.is_none() {
-        return Err("There was an error getting the commit");
+        return Err("There was an error getting the commit".to_string());
     }
 
     let option = option.unwrap();
@@ -43,13 +43,13 @@ fn get_sha<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<String, &
     Ok(sha.to_string())
 }
 
-fn get_log<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<Vec<String>, &'static str> {
+fn get_log<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<Vec<String>, String> {
     let log = command
         .exec(
             &["log", "--format=%h %s", "-n", &number.to_string()],
             verbose,
         )
-        .map_err(|()| "Failed to fetch git log")?;
+        .map_err(|()| "Failed to fetch git log".to_string())?;
 
     let log = log.lines().map(String::from);
     let log = log.collect();

@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(author, version, about)]
+#[command(allow_external_subcommands = true)]
 pub struct Args {
     #[arg(short, long, default_value_t = false, help = "Verbose output")]
     pub verbose: bool,
@@ -82,4 +83,7 @@ pub enum Commands {
         #[arg(short, long, default_value_t = 25, help = "Number of commits to show")]
         number: u32,
     },
+
+    #[command(external_subcommand)]
+    External(Vec<String>),
 }

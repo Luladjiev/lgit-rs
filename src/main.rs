@@ -1,7 +1,9 @@
 use clap::Parser;
 
 use crate::cli::{Args, Commands};
-use crate::commands::{autosquash, branch, checkout, cherry_pick, delete_branches, rebase, Cmd};
+use crate::commands::{
+    autosquash, branch, checkout, cherry_pick, delete_branches, git_fallback, rebase, Cmd,
+};
 use crate::utils::get_base;
 
 mod cli;
@@ -39,7 +41,8 @@ fn main() {
         Some(Commands::CherryPick { branch, number }) => {
             cherry_pick::run(&command, &branch, number, cli.verbose)
         }
-        None => Err("No command specified, please run with --help for more info"),
+        Some(Commands::External(args)) => git_fallback::run(&command, &args, cli.verbose),
+        None => Err("No command specified, please run with --help for more info".to_string()),
     };
 
     if let Err(err) = result {

@@ -12,6 +12,7 @@ repositories. It provides a set of commands that streamline common git operation
 - **DeleteBranches**: Safely delete all branches for which remotes are gone. Use with caution!
 - **Fixup**: Commit as a fixup, simplifying your commit history.
 - **Rebase**: Rebase the current branch on top of freshly pulled BASE branch with a single command.
+- **Git Command Fallback**: For any git command not directly supported by lgit, the tool will automatically pass the command through to git.
 
 ## Requirements
 
@@ -57,6 +58,26 @@ Each command has a dedicated help page that can be accessed by running `lgit <co
 
 ```bash
 lgit branch --help
+```
+
+### Git Command Fallback
+
+If you run a git command that is not directly supported by lgit, the tool will automatically pass the command through to git. This means you can use lgit as a drop-in replacement for git:
+
+```bash
+# These commands will be passed through to git
+lgit status
+lgit log --oneline
+lgit diff HEAD~1
+```
+
+You can also explicitly execute git commands by using `--` followed by the git command:
+
+```bash
+# Explicitly pass commands to git using --
+lgit -- status
+lgit -- log --graph --all
+lgit -- reset --hard HEAD~1
 ```
 
 ## Development

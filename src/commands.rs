@@ -1,4 +1,4 @@
-use std::process;
+use std::process::{self, Stdio};
 
 use mockall::mock;
 
@@ -20,28 +20,21 @@ pub struct Cmd {}
 impl Exec for Cmd {
     fn exec(&self, args: &[&str], verbose: bool) -> Result<String, ()> {
         let cmd = "git";
-        let output = process::Command::new(cmd)
-            .args(args)
-            .output()
-            .expect("Failed to execute command");
-
+        
         if verbose {
             println!("Executing: {} {}\n", cmd, args.join(" "));
         }
 
-        if output.status.success() {
-            let output = String::from_utf8(output.stdout).unwrap();
+        let status = process::Command::new(cmd)
+            .args(args)
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .status()
+            .expect("Failed to execute command");
 
-            if verbose {
-                println!("{output}");
-            }
-
-            Ok(output)
+        if status.success() {
+            Ok(String::new())
         } else {
-            if verbose {
-                println!("{}", String::from_utf8(output.stderr).unwrap());
-            }
-
             Err(())
         }
     }

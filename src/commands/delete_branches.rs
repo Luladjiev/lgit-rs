@@ -1,26 +1,22 @@
 use crate::commands::Exec;
 
-pub fn run<T: Exec>(command: &T, dry_run: bool, verbose: bool) -> Result<(), String> {
+pub fn run<T: Exec>(command: &T, dry_run: bool, verbose: bool) -> Result<(), Option<String>> {
     match delete_branches(command, dry_run, verbose) {
         Ok(output) => {
             println!("{output}");
             Ok(())
         }
-        Err(err) => Err(err),
+        Err(err) => Err(Some(err)),
     }
 }
 
-fn delete_branches<T: Exec>(
-    command: &T,
-    dry_run: bool,
-    verbose: bool,
-) -> Result<String, String> {
+fn delete_branches<T: Exec>(command: &T, dry_run: bool, verbose: bool) -> Result<String, String> {
     command
-        .exec(&["fetch", "--prune"], verbose)
+        .exec(&["fetch", "--prune"], verbose, false)
         .map_err(|()| "Failed to fetch".to_string())?;
 
     let branches = command
-        .exec(&["branch", "-vv"], verbose)
+        .exec(&["branch", "-vv"], verbose, false)
         .map_err(|()| "Failed to get branches".to_string())?;
 
     let mut result = Vec::new();
@@ -37,7 +33,7 @@ fn delete_branches<T: Exec>(
 
         if !dry_run {
             command
-                .exec(&["branch", "-D", branch_name], verbose)
+                .exec(&["branch", "-D", branch_name], verbose, false)
                 .map_err(|()| "Failed to delete branch".to_string())?;
         }
 
@@ -60,9 +56,11 @@ mod tests {
         let mut command = MockCmd::new();
         command
             .expect_exec()
-            .withf(|args, verbose| args == ["fetch", "--prune"] && !(*verbose))
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["fetch", "--prune"] && !(*verbose) && !(*inherit_stderr)
+            })
             .times(1)
-            .returning(|_, _| Ok(String::new()));
+            .returning(|_, _, _| Ok(String::new()));
 
         command
     }
@@ -71,9 +69,9 @@ mod tests {
         let mut command = cmd_fetch_prune();
         command
             .expect_exec()
-            .withf(|args, verbose| args == ["branch", "-vv"] && !(*verbose))
+            .withf(|args, verbose, inherit_stderr| args == ["branch", "-vv"] && !(*verbose) && !(*inherit_stderr))
             .times(1)
-            .returning(|_, _| Ok("  branch1 [origin/branch1: gone]\n  branch2 [origin/branch2: gone]\n* branch3 [origin/branch3]".to_string()));
+            .returning(|_, _, _| Ok("  branch1 [origin/branch1: gone]\n  branch2 [origin/branch2: gone]\n* branch3 [origin/branch3]".to_string()));
 
         command
     }
@@ -96,14 +94,18 @@ mod tests {
         let mut command = cmd_fetch_prune_branch();
         command
             .expect_exec()
-            .withf(|args, verbose| args == ["branch", "-D", "branch1"] && !(*verbose))
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["branch", "-D", "branch1"] && !(*verbose) && !(*inherit_stderr)
+            })
             .times(1)
-            .returning(|_, _| Ok(String::new()));
+            .returning(|_, _, _| Ok(String::new()));
         command
             .expect_exec()
-            .withf(|args, verbose| args == ["branch", "-D", "branch2"] && !(*verbose))
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["branch", "-D", "branch2"] && !(*verbose) && !(*inherit_stderr)
+            })
             .times(1)
-            .returning(|_, _| Ok(String::new()));
+            .returning(|_, _, _| Ok(String::new()));
 
         let result = delete_branches(&command, false, false);
 
@@ -119,9 +121,11 @@ mod tests {
         let mut command = cmd_fetch_prune_branch();
         command
             .expect_exec()
-            .withf(|args, verbose| args == ["branch", "-D", "branch1"] && !(*verbose))
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["branch", "-D", "branch1"] && !(*verbose) && !(*inherit_stderr)
+            })
             .times(1)
-            .returning(|_, _| Err(()));
+            .returning(|_, _, _| Err(()));
 
         let result = delete_branches(&command, false, false);
 
@@ -133,9 +137,11 @@ mod tests {
         let mut command = cmd_fetch_prune();
         command
             .expect_exec()
-            .withf(|args, verbose| args == ["branch", "-vv"] && !(*verbose))
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["branch", "-vv"] && !(*verbose) && !(*inherit_stderr)
+            })
             .times(1)
-            .returning(|_, _| Ok("* branch3 [origin/branch3]".to_string()));
+            .returning(|_, _, _| Ok("* branch3 [origin/branch3]".to_string()));
 
         let result = delete_branches(&command, false, false);
 

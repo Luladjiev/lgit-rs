@@ -5,7 +5,7 @@ pub fn run<T: Exec>(
     base: &str,
     number: Option<u32>,
     verbose: bool,
-) -> Result<(), String> {
+) -> Result<(), Option<String>> {
     let mut args = vec![
         "-c",
         "sequence.editor=:", // used in order to prevent --interactive blocking the autosquash
@@ -23,9 +23,9 @@ pub fn run<T: Exec>(
         None => args.push(base),
     }
 
-    cmd.exec(&args, verbose)
+    cmd.exec(&args, verbose, false)
         .map(|_| ())
-        .map_err(|()| "Failed to auto squash commits".to_string())
+        .map_err(|()| Some("Failed to auto squash commits".to_string()))
 }
 
 #[cfg(test)]
@@ -38,7 +38,7 @@ mod tests {
     fn test_with_number_supplied() {
         let mut cmd = MockCmd::new();
         cmd.expect_exec()
-            .withf(|args, verbose| {
+            .withf(|args, verbose, inherit_stderr| {
                 args == [
                     "-c",
                     "sequence.editor=:",
@@ -47,9 +47,10 @@ mod tests {
                     "--autosquash",
                     "HEAD~1",
                 ] && !(*verbose)
+                    && !(*inherit_stderr)
             })
             .times(1)
-            .returning(|_, _| Ok(String::new()));
+            .returning(|_, _, _| Ok(String::new()));
 
         let result = run(&cmd, "HEAD~1", None, false);
 
@@ -60,7 +61,7 @@ mod tests {
     fn test_with_base_supplied() {
         let mut cmd = MockCmd::new();
         cmd.expect_exec()
-            .withf(|args, verbose| {
+            .withf(|args, verbose, inherit_stderr| {
                 args == [
                     "-c",
                     "sequence.editor=:",
@@ -69,9 +70,10 @@ mod tests {
                     "--autosquash",
                     "main",
                 ] && !(*verbose)
+                    && !(*inherit_stderr)
             })
             .times(1)
-            .returning(|_, _| Ok(String::new()));
+            .returning(|_, _, _| Ok(String::new()));
 
         let result = run(&cmd, "main", None, false);
 

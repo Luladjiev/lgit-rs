@@ -3,13 +3,13 @@ use dialoguer::FuzzySelect;
 
 use crate::commands::Exec;
 
-pub fn run<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<(), String> {
+pub fn run<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<(), Option<String>> {
     let commit = get_sha(command, number, verbose)?;
-    let result = command.exec(&["commit", "--fixup", commit.as_str()], verbose);
+    let result = command.exec(&["commit", "--fixup", commit.as_str()], verbose, false);
 
     match result {
         Ok(_) => Ok(()),
-        Err(()) => Err("Failed to fixup commit".to_string()),
+        Err(()) => Err(Some("Failed to fixup commit".to_string())),
     }
 }
 
@@ -48,6 +48,7 @@ fn get_log<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<Vec<Strin
         .exec(
             &["log", "--format=%h %s", "-n", &number.to_string()],
             verbose,
+            false,
         )
         .map_err(|()| "Failed to fetch git log".to_string())?;
 

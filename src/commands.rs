@@ -12,30 +12,54 @@ pub mod git_fallback;
 pub mod rebase;
 
 pub trait Exec {
-    fn exec(&self, args: &[&str], verbose: bool) -> Result<String, ()>;
+    fn exec(&self, args: &[&str], verbose: bool, inherit_stdio: bool) -> Result<String, ()>;
 }
 
 pub struct Cmd {}
 
 impl Exec for Cmd {
-    fn exec(&self, args: &[&str], verbose: bool) -> Result<String, ()> {
+    fn exec(&self, args: &[&str], verbose: bool, inherit_stdio: bool) -> Result<String, ()> {
         let cmd = "git";
-        
+
         if verbose {
             println!("Executing: {} {}\n", cmd, args.join(" "));
         }
 
-        let status = process::Command::new(cmd)
-            .args(args)
-            .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
-            .status()
-            .expect("Failed to execute command");
+        match inherit_stdio {
+            true => {
+                let status = process::Command::new(cmd)
+                    .args(args)
+                    .stdout(Stdio::inherit())
+                    .stderr(Stdio::inherit())
+                    .status()
+                    .expect("Failed to execute command");
 
-        if status.success() {
-            Ok(String::new())
-        } else {
-            Err(())
+                if status.success() {
+                    Ok(String::new())
+                } else {
+                    Err(())
+                }
+            }
+            false => {
+                let output = process::Command::new(cmd)
+                    .args(args)
+                    .output()
+                    .expect("Failed to execute command");
+
+                let status = output.status;
+
+                if status.success() {
+                    let output = String::from_utf8(output.stdout).unwrap();
+
+                    if verbose {
+                        println!("{output}");
+                    }
+
+                    Ok(output)
+                } else {
+                    Err(())
+                }
+            }
         }
     }
 }
@@ -44,6 +68,6 @@ mock! {
     pub Cmd {}
 
     impl Exec for Cmd {
-        fn exec<'a>(&self, args: &[&'a str], verbose: bool) -> Result<String, ()>;
+        fn exec<'a>(&self, args: &[&'a str], verbose: bool, inherit_stdio: bool) -> Result<String, ()>;
     }
 }

@@ -9,7 +9,7 @@ pub fn run<T: Exec>(
     remote: bool,
     all: bool,
     verbose: bool,
-) -> Result<(), String> {
+) -> Result<(), Option<String>> {
     if let Some(name) = name {
         return do_checkout(cmd, &name, verbose);
     }
@@ -19,16 +19,21 @@ pub fn run<T: Exec>(
     do_checkout(cmd, &branch, verbose)
 }
 
-fn do_checkout<T: Exec>(cmd: &T, branch: &str, verbose: bool) -> Result<(), String> {
-    cmd.exec(&["checkout", branch], verbose)
+fn do_checkout<T: Exec>(cmd: &T, branch: &str, verbose: bool) -> Result<(), Option<String>> {
+    cmd.exec(&["checkout", branch], verbose, false)
         .map_err(|()| "Failed to checkout branch".to_string())?;
 
     Ok(())
 }
 
-fn get_branches<T: Exec>(cmd: &T, remote: bool, all: bool, verbose: bool) -> Result<String, String> {
+fn get_branches<T: Exec>(
+    cmd: &T,
+    remote: bool,
+    all: bool,
+    verbose: bool,
+) -> Result<String, String> {
     let remotes: Vec<String> = cmd
-        .exec(&["remote"], verbose)
+        .exec(&["remote"], verbose, false)
         .map_err(|()| "Failed to get remotes".to_string())?
         .lines()
         .map(String::from)
@@ -44,7 +49,7 @@ fn get_branches<T: Exec>(cmd: &T, remote: bool, all: bool, verbose: bool) -> Res
     };
 
     let mut branches: Vec<String> = cmd
-        .exec(&branch_args, verbose)
+        .exec(&branch_args, verbose, false)
         .map_err(|()| "Failed to list branches".to_string())?
         .lines()
         .map(|line| {

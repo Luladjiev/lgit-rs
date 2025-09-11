@@ -41,11 +41,24 @@ fn main() {
         Some(Commands::CherryPick { branch, number }) => {
             cherry_pick::run(&command, &branch, number, cli.verbose)
         }
-        Some(Commands::External(args)) => git_fallback::run(&command, &args, cli.verbose),
-        None => Err("No command specified, please run with --help for more info".to_string()),
+        Some(Commands::External(args)) => {
+            // Handle 'co' alias for checkout
+            // if !args.is_empty() && args[0] == "co" {
+            //     let name = args.get(1).map(|s| s.to_string());
+            //     // Parse remaining flags - for now, just handle basic case
+            //     let remote = args.iter().any(|arg| arg == "-r" || arg == "--remote");
+            //     let all = args.iter().any(|arg| arg == "-a" || arg == "--all");
+            //     checkout::run(&command, name, remote, all, cli.verbose)
+            // } else {
+            git_fallback::run(&command, &args, cli.verbose)
+            // }
+        }
+        None => Err(Some(
+            "No command specified, please run with --help for more info".to_string(),
+        )),
     };
 
-    if let Err(err) = result {
+    if let Err(Some(err)) = result {
         println!("{err}");
     }
 }

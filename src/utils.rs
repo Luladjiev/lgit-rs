@@ -217,4 +217,118 @@ mod tests {
 
         assert!(result.is_err());
     }
+
+    #[test]
+    fn test_stash_no_changes() {
+        let mut command = MockCmd::new();
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["status", "--porcelain"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Ok(String::new()));
+
+        let result = super::stash(&command, false);
+
+        assert_eq!(result, Ok(false));
+    }
+
+    #[test]
+    fn test_stash_with_changes() {
+        let mut command = MockCmd::new();
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["status", "--porcelain"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Ok("M file.txt".to_string()));
+
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["stash", "-u"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Ok("Saved working directory".to_string()));
+
+        let result = super::stash(&command, false);
+
+        assert_eq!(result, Ok(true));
+    }
+
+    #[test]
+    fn test_stash_status_failure() {
+        let mut command = MockCmd::new();
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["status", "--porcelain"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Err(()));
+
+        let result = super::stash(&command, false);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Failed to retrieve branch status");
+    }
+
+    #[test]
+    fn test_stash_stash_failure() {
+        let mut command = MockCmd::new();
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["status", "--porcelain"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Ok("M file.txt".to_string()));
+
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["stash", "-u"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Err(()));
+
+        let result = super::stash(&command, false);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Failed to stash changes");
+    }
+
+    #[test]
+    fn test_unstash_success() {
+        let mut command = MockCmd::new();
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["stash", "pop"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Ok("Applied stash".to_string()));
+
+        let result = super::unstash(&command, false);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_unstash_failure() {
+        let mut command = MockCmd::new();
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["stash", "pop"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Err(()));
+
+        let result = super::unstash(&command, false);
+
+        assert!(result.is_err());
+    }
 }

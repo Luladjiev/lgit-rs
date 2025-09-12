@@ -96,3 +96,155 @@ fn get_branches<T: Exec>(
 
     Ok(branch.to_string())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::commands::MockCmd;
+
+    #[test]
+    fn test_run_with_specific_branch() {
+        let mut command = MockCmd::new();
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["checkout", "feature-branch"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Ok(String::new()));
+
+        let result = run(
+            &command,
+            Some("feature-branch".to_string()),
+            false,
+            false,
+            false,
+        );
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_run_checkout_failure() {
+        let mut command = MockCmd::new();
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["checkout", "nonexistent-branch"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Err(()));
+
+        let result = run(
+            &command,
+            Some("nonexistent-branch".to_string()),
+            false,
+            false,
+            false,
+        );
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_do_checkout_success() {
+        let mut command = MockCmd::new();
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["checkout", "main"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Ok(String::new()));
+
+        let result = do_checkout(&command, "main", false);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_do_checkout_failure() {
+        let mut command = MockCmd::new();
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["checkout", "invalid"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Err(()));
+
+        let result = do_checkout(&command, "invalid", false);
+
+        assert!(result.is_err());
+    }
+
+    // Note: We can't easily test get_branches success case because it uses interactive FuzzySelect
+    // which requires user input. We focus on testing the error cases and the individual functions.
+
+    #[test]
+    fn test_get_branches_no_branches_found() {
+        let mut command = MockCmd::new();
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["remote"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Ok("origin".to_string()));
+
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["branch", "--format", "%(refname)"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Ok(String::new()));
+
+        let result = get_branches(&command, false, false, false);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "No branches found");
+    }
+
+    #[test]
+    fn test_get_branches_remote_failure() {
+        let mut command = MockCmd::new();
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["remote"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Err(()));
+
+        let result = get_branches(&command, false, false, false);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Failed to get remotes");
+    }
+
+    #[test]
+    fn test_get_branches_branch_list_failure() {
+        let mut command = MockCmd::new();
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["remote"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Ok("origin".to_string()));
+
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["branch", "--format", "%(refname)"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Err(()));
+
+        let result = get_branches(&command, false, false, false);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Failed to list branches");
+    }
+}

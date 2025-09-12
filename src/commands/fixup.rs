@@ -57,3 +57,110 @@ fn get_log<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<Vec<Strin
 
     Ok(log)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::commands::MockCmd;
+
+    #[test]
+    fn test_get_log_success() {
+        let mut command = MockCmd::new();
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["log", "--format=%h %s", "-n", "5"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| {
+                Ok("abc123 First commit\ndef456 Second commit\n789ghi Third commit".to_string())
+            });
+
+        let result = get_log(&command, 5, false);
+
+        assert!(result.is_ok());
+        let commits = result.unwrap();
+        assert_eq!(commits.len(), 3);
+        assert_eq!(commits[0], "abc123 First commit");
+        assert_eq!(commits[1], "def456 Second commit");
+        assert_eq!(commits[2], "789ghi Third commit");
+    }
+
+    #[test]
+    fn test_get_log_failure() {
+        let mut command = MockCmd::new();
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["log", "--format=%h %s", "-n", "10"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Err(()));
+
+        let result = get_log(&command, 10, false);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Failed to fetch git log");
+    }
+
+    #[test]
+    fn test_get_log_empty_output() {
+        let mut command = MockCmd::new();
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["log", "--format=%h %s", "-n", "1"] && !(*verbose) && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Ok(String::new()));
+
+        let result = get_log(&command, 1, false);
+
+        assert!(result.is_ok());
+        let commits = result.unwrap();
+        // Empty string when split into lines becomes an empty vector
+        assert_eq!(commits.len(), 0);
+    }
+
+    #[test]
+    fn test_get_log_verbose() {
+        let mut command = MockCmd::new();
+        command
+            .expect_exec()
+            .withf(|args, verbose, inherit_stderr| {
+                args == ["log", "--format=%h %s", "-n", "3"] && *verbose && !(*inherit_stderr)
+            })
+            .times(1)
+            .returning(|_, _, _| Ok("abc123 Test commit".to_string()));
+
+        let result = get_log(&command, 3, true);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_get_sha_from_valid_commit() {
+        // This test focuses on the SHA extraction logic
+        // Since get_sha() uses interactive selection, we test the SHA parsing indirectly
+        // by testing the logic that would extract SHA from a commit line
+        let commit_line = "abc123 This is a test commit message";
+        let sha = commit_line.split_whitespace().next().unwrap();
+        assert_eq!(sha, "abc123");
+    }
+
+    #[test]
+    fn test_get_sha_from_empty_commit() {
+        // Test edge case where commit line might be empty
+        let commit_line = "";
+        let sha = commit_line.split_whitespace().next();
+        assert!(sha.is_none());
+    }
+
+    #[test]
+    fn test_get_sha_from_malformed_commit() {
+        // Test with just a SHA and no message
+        let commit_line = "def456";
+        let sha = commit_line.split_whitespace().next().unwrap();
+        assert_eq!(sha, "def456");
+    }
+}

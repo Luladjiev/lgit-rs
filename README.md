@@ -107,10 +107,10 @@ Here are some common workflows to get you started with lgit:
 lgit branch feature/awesome-feature
 
 # Make your changes, then commit as fixup for easy cleanup later
-lgit fixup "Add awesome feature"
+lgit fixup
 
 # Make more changes, create another fixup
-lgit fixup "Fix typo in awesome feature"
+lgit fixup
 
 # Squash all fixup commits when you're ready
 lgit autosquash
@@ -216,10 +216,10 @@ lgit co --all
 #### Fixup Commits
 ```bash
 # Create fixup commit with staged changes
-lgit fixup "Fix the bug"
+lgit fixup
 
 # Shorthand
-lgit f "Update docs"
+lgit f
 ```
 
 #### Cherry-pick
@@ -269,7 +269,7 @@ lgit streamlines common git workflows by providing opinionated, high-level comma
 | Task | Git Commands | lgit Command |
 |------|-------------|--------------|
 | Create branch from latest main | `git checkout main && git pull && git checkout -b feature` | `lgit branch feature` |
-| Fixup and squash commits | `git add -A && git commit --fixup=HEAD~1 && git rebase -i --autosquash HEAD~3` | `lgit fixup "fix" && lgit autosquash` |
+| Fixup and squash commits | `git add -A && git commit --fixup=HEAD~1 && git rebase -i --autosquash HEAD~3` | `lgit fixup && lgit autosquash` |
 | Interactive branch checkout | `git branch -a` → copy/paste branch name → `git checkout branch` | `lgit checkout` |
 | Clean up merged branches | `git branch -d branch1 && git branch -d branch2...` | `lgit delete-branches` |
 | Rebase on latest main | `git checkout main && git pull && git checkout - && git rebase main` | `lgit rebase` |
@@ -342,7 +342,7 @@ cargo test && cargo fmt && cargo clippy
 2. **Update documentation** if needed
 3. **Commit your changes** using conventional commits:
    ```bash
-   lgit fixup "feat: add new awesome feature"
+   lgit fixup
    lgit autosquash
    ```
 4. **Push to your fork** and **create a Pull Request**

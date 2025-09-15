@@ -5,15 +5,15 @@ pub fn run<T: Exec>(command: &T, base: &str, verbose: bool) -> Result<(), Option
     let unsaved_changes = stash(command, verbose)?;
 
     refresh_base(command, base, verbose)
-        .map_err(|()| "Failed to refresh base branch".to_string())?;
+        .map_err(|()| format!("Failed to refresh base branch '{}'", base))?;
 
     command
         .exec(&["checkout", "-"], verbose, false)
-        .map_err(|()| "Failed to checkout back to initial branch".to_string())?;
+        .map_err(|()| "Failed to checkout back to initial branch (git checkout -)".to_string())?;
 
     command
         .exec(&["rebase", base], verbose, false)
-        .map_err(|()| "Failed to rebase".to_string())?;
+        .map_err(|()| format!("Failed to rebase onto '{}'", base))?;
 
     if unsaved_changes {
         unstash(command, verbose)?;

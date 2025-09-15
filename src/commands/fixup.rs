@@ -9,7 +9,7 @@ pub fn run<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<(), Optio
 
     match result {
         Ok(_) => Ok(()),
-        Err(()) => Err(Some("Failed to fixup commit".to_string())),
+        Err(()) => Err(Some(format!("Failed to fixup commit '{}'", commit))),
     }
 }
 
@@ -17,7 +17,7 @@ fn get_sha<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<String, S
     let options = get_log(command, number, verbose);
     let options = options?;
 
-    let option = FuzzySelect::with_theme(&ColorfulTheme::default())
+    let selected_index = FuzzySelect::with_theme(&ColorfulTheme::default())
         .with_prompt("Which commit you want to fix?")
         .default(0)
         .items(&options)
@@ -27,13 +27,13 @@ fn get_sha<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<String, S
                 println!("{err}");
             }
 
-            "There was an error determining the commit".to_string()
+            format!("Failed to select commit: {}", err)
         })?;
 
-    let option = options.get(option);
+    let option = options.get(selected_index);
 
     if option.is_none() {
-        return Err("There was an error getting the commit".to_string());
+        return Err(format!("Invalid commit selection index: {}", selected_index));
     }
 
     let option = option.unwrap();
@@ -50,7 +50,7 @@ fn get_log<T: Exec>(command: &T, number: u32, verbose: bool) -> Result<Vec<Strin
             verbose,
             false,
         )
-        .map_err(|()| "Failed to fetch git log".to_string())?;
+        .map_err(|()| format!("Failed to fetch git log (last {} commits)", number))?;
 
     let log = log.lines().map(String::from);
     let log = log.collect();
@@ -100,7 +100,7 @@ mod tests {
         let result = get_log(&command, 10, false);
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "Failed to fetch git log");
+        assert_eq!(result.unwrap_err(), "Failed to fetch git log (last 10 commits)");
     }
 
     #[test]

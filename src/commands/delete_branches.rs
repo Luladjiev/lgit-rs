@@ -13,11 +13,11 @@ pub fn run<T: Exec>(command: &T, dry_run: bool, verbose: bool) -> Result<(), Opt
 fn delete_branches<T: Exec>(command: &T, dry_run: bool, verbose: bool) -> Result<String, String> {
     command
         .exec(&["fetch", "--prune"], verbose, false)
-        .map_err(|()| "Failed to fetch".to_string())?;
+        .map_err(|()| "Failed to fetch and prune from remote (check network connection)".to_string())?;
 
     let branches = command
         .exec(&["branch", "-vv"], verbose, false)
-        .map_err(|()| "Failed to get branches".to_string())?;
+        .map_err(|()| "Failed to get branch information with tracking details".to_string())?;
 
     let mut result = Vec::new();
 
@@ -29,12 +29,12 @@ fn delete_branches<T: Exec>(command: &T, dry_run: bool, verbose: bool) -> Result
         let branch_name = line
             .split_whitespace()
             .next()
-            .ok_or("Failed to parse branch name".to_string())?;
+            .ok_or_else(|| format!("Failed to parse branch name from line: '{}'", line.trim()))?;
 
         if !dry_run {
             command
                 .exec(&["branch", "-D", branch_name], verbose, false)
-                .map_err(|()| "Failed to delete branch".to_string())?;
+                .map_err(|()| format!("Failed to delete branch '{}'", branch_name))?;
         }
 
         result.push(format!("Deleted branch {branch_name}"));

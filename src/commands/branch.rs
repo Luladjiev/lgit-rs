@@ -10,11 +10,11 @@ pub fn run<T: Exec>(
     let unsaved_changes = stash(command, verbose)?;
 
     refresh_base(command, base, verbose)
-        .map_err(|()| "Failed to refresh base branch".to_string())?;
+        .map_err(|()| format!("Failed to refresh base branch '{}'", base))?;
 
     command
         .exec(&["checkout", "-b", name], verbose, false)
-        .map_err(|()| "Failed to create branch".to_string())?;
+        .map_err(|()| format!("Failed to create branch '{}'", name))?;
 
     if unsaved_changes {
         unstash(command, verbose)?;

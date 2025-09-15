@@ -84,6 +84,15 @@ pub enum Commands {
         number: u32,
     },
 
+    #[command(
+        about = "Interactively delete local branches",
+        visible_alias = "db"
+    )]
+    DeleteBranch {
+        #[arg(short, long, help = "Force delete branches (uses -D instead of -d)")]
+        force: bool,
+    },
+
     #[command(external_subcommand)]
     External(Vec<String>),
 }
@@ -297,6 +306,45 @@ mod tests {
                 assert_eq!(number, 25); // default value
             }
             _ => panic!("Expected CherryPick command"),
+        }
+    }
+
+    #[test]
+    fn test_delete_branch_command() {
+        let args = Args::try_parse_from(&["lgit", "delete-branch"]);
+
+        assert!(args.is_ok());
+        match args.unwrap().command {
+            Some(Commands::DeleteBranch { force }) => {
+                assert!(!force); // default value
+            }
+            _ => panic!("Expected DeleteBranch command"),
+        }
+    }
+
+    #[test]
+    fn test_delete_branch_with_force() {
+        let args = Args::try_parse_from(&["lgit", "delete-branch", "--force"]);
+
+        assert!(args.is_ok());
+        match args.unwrap().command {
+            Some(Commands::DeleteBranch { force }) => {
+                assert!(force);
+            }
+            _ => panic!("Expected DeleteBranch command"),
+        }
+    }
+
+    #[test]
+    fn test_delete_branch_alias() {
+        let args = Args::try_parse_from(&["lgit", "db", "--force"]);
+
+        assert!(args.is_ok());
+        match args.unwrap().command {
+            Some(Commands::DeleteBranch { force }) => {
+                assert!(force);
+            }
+            _ => panic!("Expected DeleteBranch command"),
         }
     }
 

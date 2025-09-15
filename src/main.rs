@@ -2,7 +2,7 @@ use clap::Parser;
 
 use crate::cli::{Args, Commands};
 use crate::commands::{
-    autosquash, branch, checkout, cherry_pick, delete_branches, git_fallback, rebase, Cmd,
+    autosquash, branch, checkout, cherry_pick, delete_branch, delete_branches, git_fallback, rebase, Cmd,
 };
 use crate::utils::get_base;
 
@@ -40,6 +40,9 @@ fn main() {
         }
         Some(Commands::CherryPick { branch, number }) => {
             cherry_pick::run(&command, &branch, number, cli.verbose)
+        }
+        Some(Commands::DeleteBranch { force }) => {
+            delete_branch::run(&command, force, cli.verbose)
         }
         Some(Commands::External(args)) => {
             // Handle 'co' alias for checkout

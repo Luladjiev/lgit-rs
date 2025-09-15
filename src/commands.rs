@@ -32,7 +32,7 @@ impl Exec for Cmd {
                     .stdout(Stdio::inherit())
                     .stderr(Stdio::inherit())
                     .status()
-                    .expect("Failed to execute command");
+                    .expect(&format!("Failed to execute git command: git {}", args.join(" ")));
 
                 if status.success() {
                     Ok(String::new())
@@ -44,7 +44,7 @@ impl Exec for Cmd {
                 let output = process::Command::new(cmd)
                     .args(args)
                     .output()
-                    .expect("Failed to execute command");
+                    .expect(&format!("Failed to execute git command: git {}", args.join(" ")));
 
                 let status = output.status;
 

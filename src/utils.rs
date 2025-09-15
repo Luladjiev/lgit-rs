@@ -7,7 +7,7 @@ pub fn get_default_branch<T: Exec>(command: &T, verbose: bool) -> Result<&'stati
         }
     }
 
-    Err("Failed to determine default branch".to_string())
+    Err("Failed to determine default branch (neither 'main' nor 'master' found)".to_string())
 }
 
 pub fn get_base<T: Exec>(command: &T, base: Option<String>, verbose: bool) -> String {
@@ -25,10 +25,10 @@ pub fn refresh_base<'a, T: Exec>(command: &T, base: &'a str, verbose: bool) -> R
 fn search_branch<T: Exec>(command: &T, branch: &str, verbose: bool) -> Result<(), Option<String>> {
     let result = command
         .exec(&["branch", "-l", branch], verbose, false)
-        .map_err(|()| "Failed to list branch".to_string())?;
+        .map_err(|()| format!("Failed to list branch '{}'", branch))?;
 
     if result.is_empty() {
-        Err(Some("Branch not found".to_string()))
+        Err(Some(format!("Branch '{}' not found", branch)))
     } else {
         Ok(())
     }
@@ -37,7 +37,7 @@ fn search_branch<T: Exec>(command: &T, branch: &str, verbose: bool) -> Result<()
 pub fn stash<T: Exec>(command: &T, verbose: bool) -> Result<bool, String> {
     let result = command
         .exec(&["status", "--porcelain"], verbose, false)
-        .map_err(|()| "Failed to retrieve branch status".to_string())?;
+        .map_err(|()| "Failed to retrieve git status (check if in git repository)".to_string())?;
 
     if result.is_empty() {
         return Ok(false);
@@ -45,7 +45,7 @@ pub fn stash<T: Exec>(command: &T, verbose: bool) -> Result<bool, String> {
 
     command
         .exec(&["stash", "-u"], verbose, false)
-        .map_err(|()| "Failed to stash changes".to_string())?;
+        .map_err(|()| "Failed to stash uncommitted changes".to_string())?;
 
     Ok(true)
 }
@@ -53,7 +53,7 @@ pub fn stash<T: Exec>(command: &T, verbose: bool) -> Result<bool, String> {
 pub fn unstash<T: Exec>(command: &T, verbose: bool) -> Result<(), Option<String>> {
     command
         .exec(&["stash", "pop"], verbose, false)
-        .map_err(|()| "Failed to unstash changes".to_string())?;
+        .map_err(|()| "Failed to restore stashed changes (use 'git stash pop' manually)".to_string())?;
 
     Ok(())
 }
@@ -272,7 +272,7 @@ mod tests {
         let result = super::stash(&command, false);
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "Failed to retrieve branch status");
+        assert_eq!(result.unwrap_err(), "Failed to retrieve git status (check if in git repository)");
     }
 
     #[test]
@@ -297,7 +297,7 @@ mod tests {
         let result = super::stash(&command, false);
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "Failed to stash changes");
+        assert_eq!(result.unwrap_err(), "Failed to stash uncommitted changes");
     }
 
     #[test]

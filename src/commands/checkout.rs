@@ -21,7 +21,7 @@ pub fn run<T: Exec>(
 
 fn do_checkout<T: Exec>(cmd: &T, branch: &str, verbose: bool) -> Result<(), Option<String>> {
     cmd.exec(&["checkout", branch], verbose, false)
-        .map_err(|()| "Failed to checkout branch".to_string())?;
+        .map_err(|()| format!("Failed to checkout branch '{}'", branch))?;
 
     Ok(())
 }
@@ -34,7 +34,7 @@ fn get_branches<T: Exec>(
 ) -> Result<String, String> {
     let remotes: Vec<String> = cmd
         .exec(&["remote"], verbose, false)
-        .map_err(|()| "Failed to get remotes".to_string())?
+        .map_err(|()| "Failed to get git remotes (check network connection)".to_string())?
         .lines()
         .map(String::from)
         .collect();
@@ -50,7 +50,16 @@ fn get_branches<T: Exec>(
 
     let mut branches: Vec<String> = cmd
         .exec(&branch_args, verbose, false)
-        .map_err(|()| "Failed to list branches".to_string())?
+        .map_err(|()| {
+            let branch_type = if all {
+                "all branches (local and remote)"
+            } else if remote {
+                "remote branches"
+            } else {
+                "local branches"
+            };
+            format!("Failed to list {}", branch_type)
+        })?
         .lines()
         .map(|line| {
             let mut line = String::from(line);
@@ -70,7 +79,14 @@ fn get_branches<T: Exec>(
     branches.dedup();
 
     if branches.is_empty() {
-        return Err("No branches found".to_string());
+        let branch_type = if all {
+            "branches (local and remote)"
+        } else if remote {
+            "remote branches"
+        } else {
+            "local branches"
+        };
+        return Err(format!("No {} found", branch_type));
     }
 
     let option = FuzzySelect::with_theme(&ColorfulTheme::default())
@@ -83,13 +99,13 @@ fn get_branches<T: Exec>(
                 println!("{err}");
             }
 
-            "There was an error determining the branch".to_string()
+            format!("Failed to select branch: {}", err)
         })?;
 
     let branch = branches.get(option);
 
     if branch.is_none() {
-        return Err("There was an error getting the branch".to_string());
+        return Err(format!("Invalid branch selection index: {}", option));
     }
 
     let branch = branch.unwrap();
@@ -203,7 +219,7 @@ mod tests {
         let result = get_branches(&command, false, false, false);
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "No branches found");
+        assert_eq!(result.unwrap_err(), "No local branches found");
     }
 
     #[test]
@@ -220,7 +236,7 @@ mod tests {
         let result = get_branches(&command, false, false, false);
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "Failed to get remotes");
+        assert_eq!(result.unwrap_err(), "Failed to get git remotes (check network connection)");
     }
 
     #[test]
@@ -245,6 +261,6 @@ mod tests {
         let result = get_branches(&command, false, false, false);
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "Failed to list branches");
+        assert_eq!(result.unwrap_err(), "Failed to list local branches");
     }
 }

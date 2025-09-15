@@ -9,10 +9,10 @@ pub fn run(cmd: &dyn Exec, branch: &str, number: u32, verbose: bool) -> Result<(
         .with_prompt("Select commits to cherry-pick (use space to select, enter to confirm)")
         .items(&commits)
         .interact()
-        .map_err(|_| "Failed to get user input".to_string())?;
+        .map_err(|err| format!("Failed to get user selection: {}", err))?;
 
     if selections.is_empty() {
-        return Err(Some("No commits selected".to_string()));
+        return Err(Some(format!("No commits selected from {} available commits", commits.len())));
     }
 
     let selected_commits: Result<Vec<&str>, String> = selections
@@ -30,7 +30,7 @@ pub fn run(cmd: &dyn Exec, branch: &str, number: u32, verbose: bool) -> Result<(
                 println!("{err}");
             }
 
-            return Err(Some("Failed to parse commits format".to_string()));
+            return Err(Some(format!("Failed to parse commit format: {}", err.trim())));
         }
     };
 
@@ -38,7 +38,7 @@ pub fn run(cmd: &dyn Exec, branch: &str, number: u32, verbose: bool) -> Result<(
 
     for commit in selected_commits {
         if cmd.exec(&["cherry-pick", commit], verbose, false).is_err() {
-            return Err(Some("Failed to cherry-pick commit".to_string()));
+            return Err(Some(format!("Failed to cherry-pick commit '{}'", commit)));
         }
     }
 
@@ -62,7 +62,7 @@ fn get_commits(
             verbose,
             false,
         )
-        .map_err(|()| "Failed to get commit history".to_string())?;
+        .map_err(|()| format!("Failed to get commit history from branch '{}' (last {} commits)", branch, number))?;
 
     Ok(output.lines().map(String::from).collect())
 }
@@ -117,7 +117,7 @@ mod tests {
         let result = get_commits(&command, "nonexistent-branch", 10, false);
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "Failed to get commit history");
+        assert_eq!(result.unwrap_err(), "Failed to get commit history from branch 'nonexistent-branch' (last 10 commits)");
     }
 
     #[test]
